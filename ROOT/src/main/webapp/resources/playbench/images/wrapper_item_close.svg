@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+    <defs>
+        <style>
+            .cls-1{opacity:.5}.cls-2{fill:none}.cls-3{fill-rule:evenodd}
+        </style>
+    </defs>
+    <g id="Icon_Cancel_Filled" class="cls-1" data-name="Icon / Cancel / Filled">
+        <path id="Box" d="M0 0h16v16H0z" class="cls-2"/>
+        <path id="Icon_Cancel_Dark" d="M152.889-12.241l-1.13 1.13-2.87-2.87-2.87 2.87-1.13-1.13 2.87-2.87-2.87-2.87 1.13-1.13 2.87 2.87 2.87-2.87 1.13 1.13-2.87 2.87zm-4-10.87a8 8 0 0 0-8 8 8 8 0 0 0 8 8 8 8 0 0 0 8-8 8 8 0 0 0-8-8z" class="cls-3" data-name="Icon / Cancel / Dark" transform="translate(-140.889 23.111)"/>
+    </g>
+</svg>

@@ -1,0 +1,1880 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.pbfw.admin.mapper.AdminMapper">
+	
+	<select id="selectTestList" parameterType="hashmap" resultType="hashmap">
+		SELECT *
+		FROM raspberry_connection_tb
+		WHERE FUNERAL_NO = 1158
+	</select>
+	
+
+	<!-- notice_tb:S -->
+	<sql id="selectNoticeSql">
+		SELECT NOTICE_NO, A.USER_NO, B.NAME, NOTICE_FLAG
+			, (SELECT KO FROM common_code_tb WHERE TARGET = 'NOTICE' AND VALUE = A.NOTICE_FLAG) AS NOTICE_FLAG_NAME
+			, TITLE, CONTENTS, END_DT
+			, DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d') AS CREATE_DT, A.CREATE_USER_NO
+			, (SELECT NAME FROM user_tb WHERE USER_NO = A.CREATE_USER_NO) AS CREATE_USER_NAME
+			, DATE_FORMAT(A.UPDATE_DT, '%Y-%m-%d') AS UPDATE_DT, A.UPDATE_USER_NO
+			, (SELECT NAME FROM user_tb WHERE USER_NO = A.UPDATE_USER_NO) AS UPDATE_USER_NAME
+		FROM notice_tb A LEFT JOIN user_tb B ON A.USER_NO = B.USER_NO
+		WHERE 1=1
+		<if test="noticeNo != null and noticeNo != ''">
+			AND NOTICE_NO = ${noticeNo}
+		</if>
+		<if test="searchText != null and searchText != ''">
+			AND TITLE LIKE CONCAT('%', #{searchText},'%')
+		</if>
+		<if test="endDt == 'true'">AND NOW() <![CDATA[<]]> A.END_DT</if>
+	</sql>
+	
+	<select id="selectNoticeTotalCount" parameterType="hashmap" resultType="string">
+		SELECT COUNT(*) AS total FROM (<include refid="selectNoticeSql"/>) A
+	</select>
+	
+	<select id="selectNoticeList" parameterType="hashmap" resultType="hashmap">
+		<include refid="selectNoticeSql"/>
+		<if test="order != null and order != ''">ORDER BY ${order}</if>
+		<if test="queryPage != null and queryPage != ''">LIMIT ${queryPage}, ${display}</if>
+	</select>
+	
+	<insert id="insertNotice" parameterType="hashmap" useGeneratedKeys="true" keyProperty="NOTICE_NO">
+		INSERT INTO notice_tb(USER_NO, TITLE, CONTENTS, END_DT, NOTICE_FLAG, CREATE_USER_NO, UPDATE_DT, UPDATE_USER_NO)
+		VALUES(${userNo}, #{title}, #{contents}, #{endDt}, ${noticeFlag}, #{createUserNo}, now(), #{updateUserNo})
+	</insert>
+	
+	<update id="updateNotice" parameterType="hashmap">
+		UPDATE notice_tb
+		SET TITLE = #{title}
+		, CONTENTS = #{contents}
+		, END_DT = #{endDt}
+		, NOTICE_FLAG = ${noticeFlag}
+		, UPDATE_DT = NOW()
+		, UPDATE_USER_NO = #{updateUserNo}
+		WHERE NOTICE_NO = ${noticeNo}
+	</update>
+	
+	<delete id="deleteNotice" parameterType="hashmap">
+		DELETE FROM notice_tb
+		WHERE NOTICE_NO = ${noticeNo}
+	</delete>
+	<!-- notice_tb:E -->
+	
+	<!-- funeral_info_tb:S
+		마지막 order by 절 추가 21.07.05 
+	-->
+	<sql id="selectAllFuneralHallSql">
+		SELECT A.FUNERAL_NO,
+			FUNERAL_NAME, ADDRESS,
+			B.USER_NO, B.NAME,
+			SIDO, GUNGU, CONTACT,
+            (SELECT NAME FROM city_code_tb WHERE CODE = A.SIDO) AS SIDO_NAME,
+    		(SELECT NAME FROM city_code_tb WHERE CODE = A.GUNGU) AS GUNGU_NAME,
+			PARKING, PARKING_CNT,
+			RESTAURANT, STORE,
+			WAITING_ROOM,
+			DISABLED_PERSON_FACILITY,
+			OPERATION_TYPE, OPERATION_KIND,
+			FUNERAL_CNT, ENSHRINE_CNT,
+			FUNERAL_IMG, LAT, LNG, 
+			LOCATION, CALCULATE_FLAG,
+			MANAGER_NO, PHOTO_MANAGER_NO, 
+		    (SELECT NAME FROM user_tb WHERE USER_NO = A.MANAGER_NO) AS MANAGER_NAME,
+		    (SELECT PHONE FROM user_tb WHERE USER_NO = A.MANAGER_NO) AS MANAGER_PHONE,
+		    (SELECT NAME FROM user_tb WHERE USER_NO = A.PHOTO_MANAGER_NO) AS PHOTO_MANAGER_NAME,
+			A.CREATE_USER_NO, A.UPDATE_USER_NO,
+		    DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d') AS CREATE_DT,
+			DATE_FORMAT(A.UPDATE_DT, '%Y-%m-%d') AS UPDATE_DT
+		FROM funeral_info_tb A LEFT JOIN user_tb B ON A.FUNERAL_NO = B.FUNERAL_NO
+		WHERE 1=1				
+		<if test="userNo != null and userNo != ''">
+			AND B.USER_NO IS NOT NULL
+			AND B.ALIVE_FLAG = 1
+			AND LV = 29
+		</if>
+		<if test="registerFlag != null and registerFlag != ''">
+			AND B.USER_NO IS NULL
+		</if>
+		<if test="funeralNo != null and funeralNo != ''">
+			AND A.FUNERAL_NO = ${funeralNo}
+		</if>
+		<if test="lv != null and lv != ''">
+			AND B.LV = ${lv}
+		</if>
+		<if test="overlap == 'true'">
+			AND (B.LV = 29 OR B.LV IS NULL)
+		</if>
+		<if test="searchText != null and searchText != ''">
+			AND FUNERAL_NAME LIKE CONCAT('%', #{searchText},'%')
+		</if>
+		<if test="funeralFlag == 'true'">
+			AND A.FUNERAL_FLAG = 1
+		</if>
+		ORDER BY (CASE 
+		WHEN ASCII(SUBSTRING(FUNERAL_NAME,1)) BETWEEN 48 AND 57 THEN 3  
+		WHEN ASCII(SUBSTRING(FUNERAL_NAME,1)) &lt; 128 THEN 2 ELSE 1 END), FUNERAL_NAME 	
+	</sql>
+	
+	<select id="selectAllFuneralHallTotalCount" parameterType="hashmap" resultType="string">
+		SELECT COUNT(*) AS total FROM (<include refid="selectAllFuneralHallSql"/>) A
+	</select>
+	
+	<select id="selectAllFuneralHallList" parameterType="hashmap" resultType="hashmap">
+		<include refid="selectAllFuneralHallSql"/>
+		<!--  <if test="order != null and order != ''">ORDER BY ${order}, FUNERAL_NAME desc</if>-->
+		<if test="queryPage != null and queryPage != ''">LIMIT ${queryPage}, ${display}</if>
+	</select>
+	
+	<insert id="insertFuneralHall" parameterType="hashmap" useGeneratedKeys="true" keyProperty="FUNERAL_NO">
+		
+	</insert>
+	
+	<update id="updateFuneralHall" parameterType="hashmap">
+		UPDATE funeral_info_tb
+		SET FUNERAL_NO = FUNERAL_NO,
+		<if test="calculateFlag != null and calculateFlag != ''">CALCULATE_FLAG = ${calculateFlag},</if>
+		<if test="photoManagerNo != null and photoManagerNo != ''">PHOTO_MANAGER_NO = ${photoManagerNo},</if>
+			UPDATE_DT = NOW(), UPDATE_USER_NO = ${actionUserNo}
+		WHERE 1=1
+		<if test="funeralNo != null and funeralNo != ''">AND FUNERAL_NO = ${funeralNo}</if>
+		<if test="funeralNoList != null and funeralNoList != ''">AND FUNERAL_NO IN (${funeralNoList})</if>
+	</update>
+	
+	<delete id="deleteFuneralHall" parameterType="hashmap">
+		UPDATE funeral_info_tb
+		SET PHOTO_MANAGER_NO = NULL
+		WHERE PHOTO_MANAGER_NO = #{photoManagerNo}
+	</delete>
+	<!-- funeral_info_tb:E -->
+	
+	
+	
+	<!-- user_menu_tb:S -->
+	<insert id="insertUserMenu" parameterType="hashmap">
+		INSERT INTO user_menu_tb(USER_NO, MENU_NO, CREATE_USER_NO)
+		VALUES
+			<foreach collection="menuNoList" item="item" index="index" separator=",">
+				(${userNo}, ${item}, ${actionUserNo})
+			</foreach>
+	</insert>
+	
+	<delete id="deleteUserMenu" parameterType="hashmap">
+		DELETE FROM user_menu_tb
+		WHERE USER_NO = ${userNo}
+	</delete>
+	<!-- user_menu_tb:E -->
+	
+	
+	
+	<!-- user_funeral_tb:S -->
+	<insert id="insertUserFuneral" parameterType="hashmap">
+		INSERT INTO user_funeral_tb(USER_NO, FUNERAL_NO, CREATE_USER_NO)
+		VALUES
+			<foreach collection="funeralNoList" item="item" index="index" separator=",">
+				(${userNo}, ${item}, ${actionUserNo})
+			</foreach>
+	</insert>
+	
+	<delete id="deleteUserFuneral" parameterType="hashmap">
+		DELETE FROM user_funeral_tb
+		WHERE USER_NO = ${userNo}
+	</delete>
+	<!-- user_funeral_tb:E -->
+	
+	
+	<!-- raspberry_tb:S -->
+	<sql id="selectRaspberrySql">
+		SELECT RASPBERRY_ID, A.FUNERAL_NO, B.FUNERAL_NAME,
+			A.RASPBERRY_CONNECTION_NO, A.BINSO_RASPBERRY_CONNECTION_NO, APPELLATION, MEMO, CLASSIFICATION, DEVICE_CODE,
+		    (SELECT KO FROM common_code_tb WHERE VALUE = C.CLASSIFICATION AND TARGET = 'RASPBERRY_CONNECTION_CLASSIFICATION') AS CLASSIFICATION_NAME,
+			(SELECT NAME FROM city_code_tb WHERE CODE = B.SIDO) AS SIDO_NAME,
+    		(SELECT NAME FROM city_code_tb WHERE CODE = B.GUNGU) AS GUNGU_NAME,
+    		A.SYSTEM_FLAG, PRIVATE_IP, AUTORIZED_IP,
+			A.CREATE_USER_NO, A.UPDATE_USER_NO,
+			DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d') AS CREATE_DT,
+			DATE_FORMAT(A.UPDATE_DT, '%Y-%m-%d') AS UPDATE_DT
+			<if test="flag != null and flag != ''">, #{flag} AS FLAG</if>
+		FROM raspberry_tb A LEFT JOIN funeral_info_tb B ON A.FUNERAL_NO = B.FUNERAL_NO
+		LEFT JOIN raspberry_connection_tb C ON A.RASPBERRY_CONNECTION_NO = C.RASPBERRY_CONNECTION_NO
+		WHERE 1=1
+		<if test="raspberryConnectionNo != null and raspberryConnectionNo != ''">AND A.RASPBERRY_CONNECTION_NO = ${raspberryConnectionNo}</if>
+		<if test="rpiBinsoList != null and rpiBinsoList != ''">AND A.RASPBERRY_CONNECTION_NO IN (${rpiBinsoList})</if>
+		<if test="raspberryId != null and raspberryId != ''">AND A.RASPBERRY_ID = #{raspberryId}</if>
+		<if test="classification != null and classification != ''">AND C.CLASSIFICATION = #{classification}</if>
+		<if test="funeralNo != null and funeralNo != ''">AND A.FUNERAL_NO = ${funeralNo}</if>
+		<if test="fcmFlag == 'true'">AND DEVICE_CODE IS NOT NULL</if>
+		<if test="fcmClassification != null and fcmClassification != ''">AND CLASSIFICATION IN (${fcmClassification})</if>
+		<if test="searchText != null and searchText != ''">
+			AND (RASPBERRY_ID LIKE CONCAT('%', #{searchText},'%') OR B.FUNERAL_NAME LIKE CONCAT('%', #{searchText},'%')
+			OR (SELECT NAME FROM city_code_tb WHERE CODE = B.GUNGU) LIKE CONCAT('%', #{searchText},'%'))
+		</if>
+	</sql>
+	
+	<select id="selectRaspberryTotalCount" parameterType="hashmap" resultType="string">
+		SELECT COUNT(*) AS total FROM (<include refid="selectRaspberrySql"/>) A
+	</select>
+	
+	<select id="selectRaspberryList" parameterType="hashmap" resultType="hashmap">
+		<include refid="selectRaspberrySql"/>
+		<if test="order != null and order != ''">ORDER BY ${order}</if>
+		<if test="queryPage != null and queryPage != ''">LIMIT ${queryPage}, ${display}</if>
+	</select>
+	
+	<insert id="insertRaspberry" parameterType="hashmap">
+		INSERT INTO raspberry_tb(RASPBERRY_ID, FUNERAL_NO, RASPBERRY_CONNECTION_NO
+		<if test="binsoRaspberryConnectionNo != null and binsoRaspberryConnectionNo != ''">
+			, BINSO_RASPBERRY_CONNECTION_NO
+		</if>
+		, MEMO, CREATE_USER_NO)
+		VALUES(#{raspberryId}, ${funeralNo}, ${raspberryConnectionNo}
+		<if test="binsoRaspberryConnectionNo != null and binsoRaspberryConnectionNo != ''">
+			, ${binsoRaspberryConnectionNo}
+		</if>
+		, #{memo}, #{actionUserNo})
+	</insert>
+	
+	<update id="updateRaspberry" parameterType="hashmap">
+		UPDATE raspberry_tb
+		SET FUNERAL_NO = ${funeralNo}, 
+			RASPBERRY_CONNECTION_NO = ${raspberryConnectionNo}, 
+			<if test="binsoRaspberryConnectionNo != null and binsoRaspberryConnectionNo != ''">
+				BINSO_RASPBERRY_CONNECTION_NO = ${binsoRaspberryConnectionNo}, 
+			</if>
+			
+			<if test="memo != null and memo != ''">
+				MEMO = #{memo},
+			</if>
+			UPDATE_DT = NOW(), 
+			UPDATE_USER_NO = ${actionUserNo} 
+		WHERE RASPBERRY_ID = #{raspberryId}
+	</update>
+	
+	<delete id="deleteRaspberry" parameterType="hashmap">
+		DELETE FROM raspberry_tb
+		WHERE RASPBERRY_ID = #{raspberryId}
+	</delete>
+	
+	
+	<update id="updateRaspberryControlReset" parameterType="hashmap">
+		UPDATE raspberry_tb
+		SET SYSTEM_FLAG = 0, 
+			UPDATE_DT = NOW(), UPDATE_USER_NO = 1
+<!-- 		WHERE RASPBERRY_ID = #{RASPBERRY_ID} -->
+	</update>
+	
+	<update id="updateRaspberryControl" parameterType="hashmap">
+		UPDATE raspberry_tb
+		SET PRIVATE_IP = #{privateIp},
+			AUTORIZED_IP = #{autorizedIp},
+			SYSTEM_FLAG = ${systemFlag}, 
+			UPDATE_DT = NOW(), UPDATE_USER_NO = 1
+		WHERE RASPBERRY_ID = #{raspberryId}
+	</update>
+	<!-- raspberry_tb:E -->
+	
+	
+	
+	<!-- 종합화면 -> 대기화면 정보 가져오기:S -->
+		<select id="selectRaspberryWait" parameterType="hashmap" resultType="hashmap">
+			SELECT A.RASPBERRY_CONNECTION_NO, A.FUNERAL_NO, A.CLASSIFICATION, A.EXPOSURE, A.APPELLATION
+				, B.STATUS_PLATE_NO, B.SLIDE_SEC, B.SCREEN_TYPE, C.PRIORITY, C.FILE
+			FROM raspberry_connection_tb A LEFT JOIN raspberry_status_plate B ON A.RASPBERRY_CONNECTION_NO = B.RASPBERRY_CONNECTION_NO
+			LEFT JOIN status_plate_files C ON B.STATUS_PLATE_NO = C.STATUS_PLATE_NO
+			WHERE A.CLASSIFICATION = 90 
+			AND A.FLAG = 1
+			<if test="funeralNo != null and funeralNo != ''">AND A.FUNERAL_NO = #{funeralNo}</if>
+		</select>
+	<!-- 종합화면 -> 대기화면 정보 가져오기:E -->
+	
+	
+	
+	<!-- raspberry_connection_tb:S -->
+	<sql id="selectRaspberryConnectionSql">
+		SELECT A.RASPBERRY_CONNECTION_NO, FUNERAL_NO, A.CLASSIFICATION,
+		    (SELECT KO FROM common_code_tb WHERE VALUE = A.CLASSIFICATION AND TARGET = 'RASPBERRY_CONNECTION_CLASSIFICATION') AS CLASSIFICATION_NAME,
+		    EXPOSURE, APPELLATION, 
+		    BUILDING_NAME, FLOOR, AREA_SIZE,
+		    A.CREATE_USER_NO, A.UPDATE_USER_NO, STATUS_PLATE_NO,
+		    STATUS_PLATE_STYLE_NO, 
+<!-- 		    STATUS_PLATE_BG_NO, -->
+		    (SELECT THUMBNAIL FROM status_plate_style WHERE STATUS_PLATE_STYLE_NO = B.STATUS_PLATE_STYLE_NO) AS THUMBNAIL, 
+		    SCREEN_MODE, FONT_TYPE, ARROW_NO, ARROW_FLAG, 
+		    SLIDE_EFFECT, SLIDE_SEC, SCREEN_TYPE, 
+		    BOTTOM_TEXT, DIVISION_MODE, DIVISION,
+		    (SELECT GROUP_CONCAT(AA.BINSO_NO ORDER BY BB.EXPOSURE, BB.RASPBERRY_CONNECTION_NO SEPARATOR ',') FROM status_plate_binso AA LEFT JOIN raspberry_connection_tb BB ON AA.BINSO_NO = BB.RASPBERRY_CONNECTION_NO WHERE AA.STATUS_PLATE_NO = B.STATUS_PLATE_NO) AS BINSO_LIST,
+<!-- 		    (SELECT GROUP_CONCAT(BINSO_NO SEPARATOR ',') FROM status_plate_binso WHERE STATUS_PLATE_NO = B.STATUS_PLATE_NO) AS BINSO_LIST, -->
+		    MULTI_MODE, MULTI_NAME,
+		    DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d') AS CREATE_DT,
+			DATE_FORMAT(A.UPDATE_DT, '%Y-%m-%d') AS UPDATE_DT
+		FROM raspberry_connection_tb A LEFT JOIN raspberry_status_plate B ON A.RASPBERRY_CONNECTION_NO = B.RASPBERRY_CONNECTION_NO
+		WHERE A.FLAG = 1
+		<if test="funeralNo != null and funeralNo != ''">AND A.FUNERAL_NO = ${funeralNo}</if>
+		<if test="classification != null and classification != ''">AND A.CLASSIFICATION = #{classification}</if>
+		<if test="classifications != null and classifications != ''">AND A.CLASSIFICATION IN (${classifications})</if>
+	</sql>
+	
+	<select id="selectRaspberryConnectionTotalCount" parameterType="hashmap" resultType="string">
+		SELECT COUNT(*) AS total FROM (<include refid="selectRaspberryConnectionSql"/>) A
+	</select>
+	
+	<select id="selectRaspberryConnectionList" parameterType="hashmap" resultType="hashmap">
+		<include refid="selectRaspberryConnectionSql"/>
+		<if test="order != null and order != ''">ORDER BY ${order}</if>
+		<if test="queryPage != null and queryPage != ''">LIMIT ${queryPage}, ${display}</if>
+	</select>
+	
+	<insert id="insertRaspberryConnection" parameterType="hashmap" useGeneratedKeys="true" keyProperty="FUNERAL_NO">
+		
+	</insert>
+	
+	<update id="updateRaspberryConnection" parameterType="hashmap">
+		
+	</update>
+	
+	<delete id="deleteRaspberryConnection" parameterType="hashmap">
+		
+	</delete>
+	<!-- raspberry_connection_tb:E -->
+	
+	
+	
+	<!-- material_tb:S -->
+	<sql id="selectMaterialSql">
+		SELECT MATERIAL_NO,
+		    TITLE, CONTENTS, ORI_FILE_NAME, FILE_PATH, 
+		    CREATE_USER_NO, UPDATE_USER_NO,
+		    DATE_FORMAT(CREATE_DT, '%Y-%m-%d') AS CREATE_DT,
+			DATE_FORMAT(UPDATE_DT, '%Y-%m-%d') AS UPDATE_DT
+		FROM material_tb
+	</sql>
+	
+	<select id="selectMaterialTotalCount" parameterType="hashmap" resultType="string">
+		SELECT COUNT(*) AS total FROM (<include refid="selectMaterialSql"/>) A
+	</select>
+	
+	<select id="selectMaterialList" parameterType="hashmap" resultType="hashmap">
+		<include refid="selectMaterialSql"/>
+		<if test="order != null and order != ''">ORDER BY ${order}</if>
+		<if test="queryPage != null and queryPage != ''">LIMIT ${queryPage}, ${display}</if>
+	</select>
+	
+	<insert id="insertMaterial" parameterType="hashmap" useGeneratedKeys="true" keyProperty="MATERIAL_NO">
+		INSERT INTO material_tb(TITLE, CONTENTS, ORI_FILE_NAME, FILE_PATH, CREATE_USER_NO)
+		VALUES(#{title}, #{contents}, #{oriFileName}, #{filePath}, ${actionUserNo})
+	</insert>
+	
+	<update id="updateMaterial" parameterType="hashmap">
+		UPDATE material_tb
+		SET TITLE = #{title}, 
+			CONTENTS = #{contents}, 
+			<if test="filePath != null and filePath != ''">FILE_PATH = #{filePath},</if>
+			<if test="oriFileName != null and oriFileName != ''">ORI_FILE_NAME = #{oriFileName},</if>
+			UPDATE_DT = NOW(), UPDATE_USER_NO = ${actionUserNo}  
+		WHERE MATERIAL_NO = ${materialNo}
+	</update>
+	
+	<delete id="deleteMaterial" parameterType="hashmap">
+		DELETE FROM material_tb
+		WHERE MATERIAL_NO = ${materialNo}
+	</delete>
+	<!-- material_tb:E -->
+	
+	
+	
+	<!-- event_tb:S -->
+	<!-- 	종합 현황판 미리보기 화면  : 종합현황판은 행사 중복없이 하나만 보여줌-->
+	<sql id="selectEventScreen30Sql">
+		SELECT A.EVENT_NO, A.FUNERAL_NO, 
+			B.RASPBERRY_CONNECTION_NO,
+		    CLASSIFICATION, APPELLATION, EXPOSURE,
+		    BUILDING_NAME, FLOOR, B.ORDER_NO,
+			DM_PHOTO, DM_PHOTO_ROTATION, DM_NAME, DM_AGE, DM_REG_NUMBER, DM_RELIGION, 
+			(SELECT KO FROM common_code_tb WHERE TARGET = 'RELIGION' AND VALUE = A.DM_RELIGION limit 1) AS DM_RELIGION_NAME,
+			DM_POSITION, DM_GENDER, DM_ADDR, DM_ADDR_DETAIL,
+			CM_NAME, CM_PHONE, CM_COMPANY, CM_POSITION,
+			(SELECT FILE FROM status_plate_bg WHERE FUNERAL_NO = A.FUNERAL_NO AND RELIGION_NO = A.DM_RELIGION limit 1) AS STATUS_PLATE_BG,
+			ENTRANCE_ROOM_NO, (SELECT APPELLATION FROM raspberry_connection_tb WHERE RASPBERRY_CONNECTION_NO = ENTRANCE_ROOM_NO limit 1) AS ENTRANCE_ROOM_NO_NAME,
+			DATE_FORMAT(A.ENTRANCE_ROOM_DT, '%m월%d일 %H시%i분') AS ENTRANCE_ROOM_DT,
+			DATE_FORMAT(A.ENTRANCE_ROOM_START_DT, '%m월%d일 %H시%i분') AS ENTRANCE_ROOM_START_DT, 
+			DATE_FORMAT(A.ENTRANCE_ROOM_END_DT, '%m월%d일 %H시%i분') AS ENTRANCE_ROOM_END_DT,
+			CARRYING_YN, DATE_FORMAT(A.CARRYING_DT, '%m월%d일 %H시%i분') AS CARRYING_DT, CARRYING_PLACE,
+			DATE_FORMAT(A.DEAD_DT, '%Y-%m-%d %H:%i') AS DEAD_DT, DEAD_CLASSIFY,
+			DEAD_PLACE, DEAD_CAUSE, FUNERAL_SYSTEM,
+			BURIAL_PLOT_NAME, MEDICAL_CERTIFICATE,
+			DIAGNOSIS_YN, DISCHARGE_YN, DRUG_YN, PUBLIC_PROSECUTOR_YN, 
+			STORE_INFO, EVENT_ALIVE_FLAG,
+			(SELECT ARROW_NO FROM raspberry_status_plate WHERE RASPBERRY_CONNECTION_NO = B.RASPBERRY_CONNECTION_NO limit 1) AS ARROW_NO,
+			A.CREATE_USER_NO, A.UPDATE_USER_NO,
+			DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d') AS CREATE_DT,
+			DATE_FORMAT(A.UPDATE_DT, '%Y-%m-%d') AS UPDATE_DT,
+			G.ARROW_NO
+		FROM event_tb A LEFT JOIN event_raspberry_connection B ON A.EVENT_NO = B.EVENT_NO AND B.ORDER_NO = 1
+		LEFT JOIN raspberry_connection_tb C ON B.RASPBERRY_CONNECTION_NO = C.RASPBERRY_CONNECTION_NO
+        LEFT JOIN raspberry_status_plate G ON B.RASPBERRY_CONNECTION_NO = G.RASPBERRY_CONNECTION_NO
+		WHERE A.CHOOMO_FLAG = 0
+		AND EVENT_ALIVE_FLAG = 1
+		<if test="eventNo != null and eventNo != ''">AND A.EVENT_NO = ${eventNo}</if>
+		<if test="funeralNo != null and funeralNo != ''">AND A.FUNERAL_NO = ${funeralNo}</if>
+		<if test="raspberryConnectionNo != null and raspberryConnectionNo != ''">AND B.RASPBERRY_CONNECTION_NO = ${raspberryConnectionNo}</if>
+<!-- 		<if test="statusPlate == 'true'">AND NOW() BETWEEN ENTRANCE_ROOM_DT AND CARRYING_DT</if> -->
+		<if test="statusPlate == 'true'">AND NOW() <![CDATA[>=]]> ENTRANCE_ROOM_DT</if>
+		GROUP BY EVENT_NO, B.RASPBERRY_CONNECTION_NO, G.ARROW_NO
+	</sql>
+	
+	<select id="selectEventScreen30List" parameterType="hashmap" resultType="hashmap">
+		<include refid="selectEventScreen30Sql"/>
+		<if test="order != null and order != ''">ORDER BY ${order}</if>
+		<if test="queryPage != null and queryPage != ''">LIMIT ${queryPage}, ${display}</if>
+	</select>
+	
+	<!-- 2021.07.19 염습대장에 필요한 필드 추가 
+		 2021.07.29 프리드 
+	-->
+	<sql id="selectEventSql">
+		SELECT D.BINSO_RASPBERRY_CONNECTION_NO, A.*, (IF(B.PRICE, B.PRICE, 0) + IF(E.PRICE, E.PRICE, 0) - IF(C.PRICE, C.PRICE, 0) - IF(F.PRICE, F.PRICE, 0)) AS RST_PRICE
+		FROM(
+			SELECT A.EVENT_NO, A.FUNERAL_NO, 
+				(SELECT FUNERAL_NAME FROM funeral_info_tb WHERE FUNERAL_NO = A.FUNERAL_NO) AS FUNERAL_NAME,
+				B.RASPBERRY_CONNECTION_NO,
+			    CLASSIFICATION, APPELLATION, EXPOSURE,
+			    BUILDING_NAME, FLOOR,
+				DM_PHOTO, DM_PHOTO_ROTATION, DM_NAME, DM_AGE, DM_REG_NUMBER, DM_RELIGION, 
+				(SELECT KO FROM common_code_tb WHERE TARGET = 'RELIGION' AND VALUE = A.DM_RELIGION) AS DM_RELIGION_NAME,
+				DM_POSITION, DM_GENDER,
+				DM_ADDR, DM_ADDR_DETAIL,
+				CM_NAME, CM_PHONE, CM_COMPANY, CM_POSITION,
+				(SELECT FILE FROM status_plate_bg WHERE FUNERAL_NO = A.FUNERAL_NO AND RELIGION_NO = A.DM_RELIGION) AS STATUS_PLATE_BG,
+				ENTRANCE_ROOM_NO, (SELECT APPELLATION FROM raspberry_connection_tb WHERE RASPBERRY_CONNECTION_NO = ENTRANCE_ROOM_NO) AS ENTRANCE_ROOM_NO_NAME,
+				DATE_FORMAT(A.ENTRANCE_ROOM_DT, '%Y-%m-%dT%H:%i') AS ENTRANCE_ROOM_DT,
+				DATE_FORMAT(A.ENTRANCE_ROOM_START_DT, '%Y-%m-%dT%H:%i') AS ENTRANCE_ROOM_START_DT, 
+				DATE_FORMAT(A.ENTRANCE_ROOM_END_DT, '%Y-%m-%dT%H:%i') AS ENTRANCE_ROOM_END_DT,
+				CARRYING_YN, DATE_FORMAT(A.CARRYING_DT, '%Y-%m-%dT%H:%i') AS CARRYING_DT, CARRYING_PLACE,
+				DATE_FORMAT(A.DEAD_DT, '%Y-%m-%d %H:%i') AS DEAD_DT, DEAD_CLASSIFY,
+				DEAD_PLACE, DEAD_CAUSE, FUNERAL_SYSTEM,
+				BURIAL_PLOT_NAME, MEDICAL_CERTIFICATE,
+				DIAGNOSIS_YN, DISCHARGE_YN, DRUG_YN, PUBLIC_PROSECUTOR_YN, 
+				STORE_INFO, BIGO, EVENT_ALIVE_FLAG, B.ORDER_NO, 
+				DATE_FORMAT(A.enshrine_dt, '%Y-%m-%dT%H:%i') AS enshrine_dt, 
+				DATE_FORMAT(A.shroud_dt, '%Y-%m-%dT%H:%i') AS shroud_dt, 
+				shroud_mgr,cm_flag,
+				(SELECT MAX(ARROW_NO) FROM raspberry_status_plate WHERE RASPBERRY_CONNECTION_NO = B.RASPBERRY_CONNECTION_NO) AS ARROW_NO,
+				A.CREATE_USER_NO, A.UPDATE_USER_NO,
+				DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d') AS CREATE_DT,
+				DATE_FORMAT(A.UPDATE_DT, '%Y-%m-%d') AS UPDATE_DT,
+				DM_BAP_NAME, CM_BAP_NAME, INSU_YN, DATE_FORMAT(A.CEREMONY_DT, '%Y-%m-%dT%H:%i') AS CEREMONY_DT, CEREMONY_YN, CAL_YN, TAKE_OVER, RELIGION_TXT,
+                (SELECT group_concat(NAME) FROM event_family_tb AA WHERE AA.EVENT_NO = A.EVENT_NO) AS FAMILY
+			FROM event_tb A LEFT JOIN event_raspberry_connection B ON A.EVENT_NO = B.EVENT_NO
+			LEFT JOIN raspberry_connection_tb C ON B.RASPBERRY_CONNECTION_NO = C.RASPBERRY_CONNECTION_NO
+	        LEFT JOIN raspberry_status_plate G ON B.RASPBERRY_CONNECTION_NO = G.RASPBERRY_CONNECTION_NO
+			WHERE A.CHOOMO_FLAG = 0
+			<if test="eventNo != null and eventNo != ''">AND A.EVENT_NO = ${eventNo}</if>
+			<if test="funeralNo != null and funeralNo != ''">AND A.FUNERAL_NO = ${funeralNo}</if>
+			<if test="raspberryConnectionNo != null and raspberryConnectionNo != ''">AND B.RASPBERRY_CONNECTION_NO = ${raspberryConnectionNo}</if>
+<!-- 			<if test="statusPlate == 'true'">AND NOW() BETWEEN ENTRANCE_ROOM_DT AND CARRYING_DT</if> -->
+			<if test="statusPlate == 'true'">AND NOW() <![CDATA[>=]]> ENTRANCE_ROOM_DT</if>
+			<if test="statusPlate == 'false'">AND NOW() <![CDATA[<]]> ENTRANCE_ROOM_DT</if>
+			<if test="binsoOverlap != null and binsoOverlap != ''">
+				AND B.RASPBERRY_CONNECTION_NO IN (${binsoList})
+				AND (#{entranceRoomDt} BETWEEN ENTRANCE_ROOM_DT AND CARRYING_DT 
+				OR ENTRANCE_ROOM_DT BETWEEN #{entranceRoomDt} AND #{carryingDt} OR CARRYING_DT BETWEEN #{entranceRoomDt} AND #{carryingDt})
+<!-- 				OR (ENTRANCE_ROOM_DT <![CDATA[<=]]> now() AND now() <![CDATA[<=]]> CARRYING_DT)) -->
+				<if test="overlapNo != null and overlapNo != ''">AND A.EVENT_NO NOT IN (${overlapNo})</if>
+			</if>
+			<if test="entranceRoomNo != null and entranceRoomNo != ''">
+				AND ENTRANCE_ROOM_NO = #{entranceRoomNo}
+			</if>
+			<if test="entranceRoomOverlap != null and entranceRoomOverlap != ''">
+				AND ENTRANCE_ROOM_NO = #{entranceRoomNo}
+				AND (ENTRANCE_ROOM_START_DT BETWEEN #{entranceRoomStartDt} AND #{entranceRoomEndDt} OR ENTRANCE_ROOM_END_DT BETWEEN #{entranceRoomStartDt} AND #{entranceRoomEndDt})
+				<if test="overlapNo != null and overlapNo != ''">AND A.EVENT_NO NOT IN (${overlapNo})</if>
+			</if>
+			<if test="searchStartDt != null and searchStartDt != '' and searchEndDt != null and searchEndDt != ''">
+				AND DATE_FORMAT(ENTRANCE_ROOM_DT, '%Y-%m-%d') BETWEEN #{searchStartDt} AND #{searchEndDt}
+			</if>
+			<if test="toDayEntranceRoom != null and toDayEntranceRoom != ''">
+				AND (ENTRANCE_ROOM_START_DT LIKE CONCAT(DATE_FORMAT(NOW(), '%Y-%m-%d'), '%') OR ENTRANCE_ROOM_END_DT LIKE CONCAT(DATE_FORMAT(NOW(), '%Y-%m-%d'), '%'))
+			</if>
+			<if test="eventAliveFlag == 'true'">AND EVENT_ALIVE_FLAG = 1</if>
+			<if test="orderNo != null and orderNo != ''">AND B.ORDER_NO = ${orderNo}</if>
+			<if test="searchText != null and searchText != ''">AND (DM_NAME LIKE CONCAT('%', #{searchText}, '%') OR CM_NAME LIKE CONCAT('%', #{searchText}, '%'))</if>
+			GROUP BY EVENT_NO, B.RASPBERRY_CONNECTION_NO
+		) A
+		LEFT JOIN (SELECT A.EVENT_NO, SUM(A.CNT * IF(B.VAT_FLAG = 1, B.PRICE, B.PRICE+B.PRICE*0.1)) AS PRICE FROM event_order_tb A LEFT JOIN funeral_item_tb B ON A.ITEM_NO = B.ITEM_NO GROUP BY EVENT_NO) B ON A.EVENT_NO = B.EVENT_NO
+		LEFT JOIN (SELECT A.EVENT_NO, SUM(A.CNT * IF(B.VAT_FLAG = 1, B.PRICE, B.PRICE+B.PRICE*0.1)) AS PRICE FROM event_take_back_tb A LEFT JOIN funeral_item_tb B ON A.ITEM_NO = B.ITEM_NO GROUP BY EVENT_NO) C ON A.EVENT_NO = C.EVENT_NO
+		LEFT JOIN raspberry_tb D ON A.RASPBERRY_CONNECTION_NO = D.BINSO_RASPBERRY_CONNECTION_NO
+        LEFT JOIN (SELECT A.EVENT_NO, SUM(A.CNT * IF(B.VAT_FLAG = 1, B.PRICE, B.PRICE+B.PRICE*0.1)) AS PRICE FROM event_order_tb A LEFT JOIN event_random_item B ON A.RANDOM_ITEM_NO = B.RANDOM_ITEM_NO AND A.EVENT_NO = B.EVENT_NO GROUP BY EVENT_NO) E ON A.EVENT_NO = E.EVENT_NO
+        LEFT JOIN (SELECT A.EVENT_NO, SUM(A.CNT * IF(B.VAT_FLAG = 1, B.PRICE, B.PRICE+B.PRICE*0.1)) AS PRICE FROM event_take_back_tb A LEFT JOIN event_random_item B ON A.RANDOM_ITEM_NO = B.RANDOM_ITEM_NO AND A.EVENT_NO = B.EVENT_NO GROUP BY EVENT_NO) F ON A.EVENT_NO = F.EVENT_NO
+	</sql>
+	
+	<select id="selectEventTotalCount" parameterType="hashmap" resultType="string">
+		SELECT COUNT(*) AS total FROM (<include refid="selectEventSql"/>) A
+	</select>
+	
+	<select id="selectEventList" parameterType="hashmap" resultType="hashmap">
+		<include refid="selectEventSql"/>
+		<if test="order != null and order != ''">ORDER BY ${order}</if>
+		<if test="queryPage != null and queryPage != ''">LIMIT ${queryPage}, ${display}</if>
+	</select>
+	
+	<!-- 염습대장 Insert 필드 추가 
+		 프리드 추가 상주플래그	 cm_flag add
+	-->	
+	<insert id="insertEvent" parameterType="hashmap" useGeneratedKeys="true" keyProperty="EVENT_NO">
+		INSERT INTO event_tb(FUNERAL_NO
+							, DM_PHOTO
+							, DM_NAME
+							, DM_AGE
+							, DM_REG_NUMBER
+							<if test="dmReligion != null and dmReligion != ''">, DM_RELIGION</if>
+							, DM_POSITION
+							, DM_GENDER
+							, DM_ADDR
+							, DM_ADDR_DETAIL
+							, CM_NAME
+							, CM_PHONE
+							, CM_COMPANY
+							, CM_POSITION
+							<if test="entranceRoomNo != null and entranceRoomNo != ''">, ENTRANCE_ROOM_NO</if>
+							, ENTRANCE_ROOM_DT
+							, ENTRANCE_ROOM_START_DT
+							, ENTRANCE_ROOM_END_DT
+							<if test="carryingYn != null and carryingYn != ''">, CARRYING_YN</if>
+							, CARRYING_DT
+							, CARRYING_PLACE
+							, DEAD_DT
+							<if test="deadClassify != null and deadClassify != ''">, DEAD_CLASSIFY</if>
+							, DEAD_PLACE
+							, DEAD_CAUSE
+							, FUNERAL_SYSTEM
+							, BURIAL_PLOT_NAME
+							, MEDICAL_CERTIFICATE
+							<if test="diagnosisYn != null and diagnosisYn != ''">, DIAGNOSIS_YN</if>
+							, DISCHARGE_YN
+							, DRUG_YN
+							, PUBLIC_PROSECUTOR_YN
+							, STORE_INFO
+							, BIGO
+							, CREATE_USER_NO
+							<if test="dmBapName != null and dmBapName != ''">, DM_BAP_NAME</if>
+							<if test="cmBapName != null and cmBapName != ''">, CM_BAP_NAME</if>
+							<if test="ceremonyDt != null and ceremonyDt != ''">, CEREMONY_DT</if>
+							<if test="ceremonyYn != null and ceremonyYn != ''">, CEREMONY_YN</if>
+							<if test="insuYn != null and insuYn != ''">, INSU_YN</if>
+							<if test="calYn != null and calYn != ''">, CAL_YN</if>
+							<if test="takeOver != null and takeOver != ''">, TAKE_OVER</if>
+							<if test="religionTxt != null and religionTxt != ''">, RELIGION_TXT</if>
+							, enshrine_dt
+							, shroud_dt
+							, shroud_mgr
+							, cm_flag
+							)
+					VALUES(${funeralNo}
+							, #{dmPhoto}
+							, #{dmName}
+							, #{dmAge}
+							, #{dmRegNumber}
+							<if test="dmReligion != null and dmReligion != ''">, #{dmReligion}</if>
+							, #{dmPosition}
+							, ${dmGender}
+							, #{dmAddr}
+							, #{dmAddrDetail}
+							, #{cmName}
+							, REPLACE(#{cmPhone}, '-', '')
+							, #{cmCompany}
+							, #{cmPosition}
+							<if test="entranceRoomNo != null and entranceRoomNo != ''">, #{entranceRoomNo}</if>
+							, #{entranceRoomDt}
+							, #{entranceRoomStartDt}
+							, #{entranceRoomEndDt}
+							<if test="carryingYn != null and carryingYn != ''">, ${carryingYn}</if>
+							, #{carryingDt}
+							, #{carryingPlace}
+							, #{deadDt}
+							<if test="deadClassify != null and deadClassify != ''">, IF(#{deadClassify} = 'direct', #{deadClassifyName}, #{deadClassify})</if>
+							, IF(#{deadPlace} = 'direct', #{deadPlaceName}, #{deadPlace})
+							, IF(#{deadCause} = 'direct', #{deadCauseName}, #{deadCause})
+							, IF(#{funeralSystem} = 'direct', #{funeralSystemName}, #{funeralSystem})
+							, #{burialPlotName}
+							, #{medicalCertificate} 
+							<if test="diagnosisYn != null and diagnosisYn != ''">, ${diagnosisYn}</if>
+							, ${dischargeYn}
+							, ${drugYn}
+							, ${publicProsecutorYn}
+							, #{storeInfo}
+							, #{bigo}
+							, ${actionUserNo}
+							<if test="dmBapName != null and dmBapName != ''">, #{dmBapName}</if>
+							<if test="cmBapName != null and cmBapName != ''">, #{cmBapName}</if>
+							<if test="ceremonyDt != null and ceremonyDt != ''">, #{ceremonyDt}</if>
+							<if test="ceremonyYn != null and ceremonyYn != ''">, #{ceremonyYn}</if>
+							<if test="insuYn != null and insuYn != ''">, ${insuYn}</if>
+							<if test="calYn != null and calYn != ''">, ${calYn}</if>
+							<if test="takeOver != null and takeOver != ''">, #{takeOver}</if>
+							<if test="religionTxt != null and religionTxt != ''">, #{religionTxt}</if>
+							, #{enshrine_dt}
+							, #{shroud_dt}
+							, #{shroud_mgr}			
+							, #{cm_flag}					
+							)
+	</insert>
+	
+	<!-- 염습대장 update 필드 추가
+	     프리드 cmflag 추가 	
+	-->
+		<update id="updateEvent" parameterType="hashmap">
+		UPDATE event_tb
+		SET EVENT_NO = EVENT_NO,
+			<if test="dmPhoto != null and dmPhoto != ''">DM_PHOTO = #{dmPhoto},</if> 
+			DM_NAME = #{dmName}, 
+			DM_AGE = #{dmAge}, 
+			DM_REG_NUMBER = #{dmRegNumber}, 
+			DM_RELIGION = IF(#{dmReligion} = '', null, #{dmReligion}),
+			DM_POSITION = #{dmPosition}, 
+			DM_GENDER = ${dmGender}, 
+			DM_ADDR = #{dmAddr}, 
+			DM_ADDR_DETAIL = #{dmAddrDetail}, 
+			CM_NAME = #{cmName}, 
+			CM_PHONE = REPLACE(#{cmPhone}, '-', ''), 
+			CM_COMPANY = #{cmCompany}, 
+			CM_POSITION = #{cmPosition}, 
+			ENTRANCE_ROOM_NO = IF(#{entranceRoomNo} = '', null, #{entranceRoomNo}),
+			ENTRANCE_ROOM_DT = #{entranceRoomDt}, 
+			ENTRANCE_ROOM_START_DT = #{entranceRoomStartDt}, 
+			ENTRANCE_ROOM_END_DT = #{entranceRoomEndDt}, 
+			<if test="carryingYn != null and carryingYn != ''">CARRYING_YN = ${carryingYn}, </if> 
+			CARRYING_DT = #{carryingDt}, 
+			CARRYING_PLACE = #{carryingPlace}, 
+			DEAD_DT = #{deadDt}, 
+			DEAD_CLASSIFY = IF(#{deadClassify} = 'direct', #{deadClassifyName}, #{deadClassify}), 
+			DEAD_PLACE = IF(#{deadPlace} = 'direct', #{deadPlaceName}, #{deadPlace}), 
+			DEAD_CAUSE = IF(#{deadCause} = 'direct', #{deadCauseName}, #{deadCause}), 
+			FUNERAL_SYSTEM = IF(#{funeralSystem} = 'direct', #{funeralSystemName}, #{funeralSystem}), 
+			BURIAL_PLOT_NAME = #{burialPlotName}, 
+			MEDICAL_CERTIFICATE = #{medicalCertificate},
+			<if test="diagnosisYn != null and diagnosisYn != ''">DIAGNOSIS_YN = ${diagnosisYn}, </if> 
+			DISCHARGE_YN = ${dischargeYn}, 
+			DRUG_YN = ${drugYn}, 
+			PUBLIC_PROSECUTOR_YN = ${publicProsecutorYn}, 
+			STORE_INFO = #{storeInfo},
+			BIGO = #{bigo},
+			UPDATE_DT = NOW(), 
+			UPDATE_USER_NO = ${actionUserNo}
+			, DM_BAP_NAME = #{dmBapName}
+			, CM_BAP_NAME = #{cmBapName} 
+			<if test="ceremonyYn == '1'">, CEREMONY_DT = #{ceremonyDt}</if>
+			<if test="ceremonyYn != null and ceremonyYn != ''">, CEREMONY_YN = ${ceremonyYn}</if>
+			<if test="insuYn != null and insuYn != ''">, INSU_YN = ${insuYn}</if> 
+			<if test="calYn != null and calYn != ''">, CAL_YN = ${calYn}</if> 
+			, TAKE_OVER = #{takeOver}
+			, RELIGION_TXT = #{religionTxt}
+			, enshrine_dt = #{enshrine_dt}
+			, shroud_dt = #{shroud_dt}
+			, shroud_mgr = #{shroud_mgr}		
+			, cm_flag = #{cm_flag}		
+		WHERE EVENT_NO = ${eventNo}
+	</update>
+	
+	<delete id="deleteEvent" parameterType="hashmap">
+		DELETE FROM event_tb
+		WHERE EVENT_NO = ${eventNo}
+	</delete>
+	<!-- event_tb:E -->
+	
+	<!-- 라즈베리-종합-스타일 없을시:S -->
+	<select id="selectEventGeneralList" parameterType="hashmap" resultType="hashmap">	
+		SELECT A.*, (SELECT GROUP_CONCAT(AA.BINSO_NO) FROM status_plate_binso AA WHERE AA.STATUS_PLATE_NO =  B.STATUS_PLATE_NO) AS BINSO_LIST
+		FROM(	
+		    SELECT C.RASPBERRY_CONNECTION_NO
+				, E.ARROW_NO, D.MULTI_MODE, D.MULTI_NAME, D.BOTTOM_TEXT, D.ARROW_FLAG
+				, (SELECT MIN(AA.RASPBERRY_CONNECTION_NO)
+					FROM raspberry_status_plate AA LEFT JOIN raspberry_connection_tb BB ON AA.RASPBERRY_CONNECTION_NO = BB.RASPBERRY_CONNECTION_NO
+					WHERE MULTI_MODE = 1 AND MULTI_NAME = D.MULTI_NAME AND BB.FUNERAL_NO = A.FUNERAL_NO  ORDER BY BB.APPELLATION ASC) AS MULTI_NO            
+				, (SELECT GROUP_CONCAT(AA.RASPBERRY_CONNECTION_NO ORDER BY BB.APPELLATION ASC)
+					FROM raspberry_status_plate AA LEFT JOIN raspberry_connection_tb BB ON AA.RASPBERRY_CONNECTION_NO = BB.RASPBERRY_CONNECTION_NO
+					WHERE MULTI_MODE = 1 AND MULTI_NAME = D.MULTI_NAME AND BB.FUNERAL_NO = A.FUNERAL_NO) AS MULTI_LIST
+				, (SELECT EXPOSURE FROM raspberry_connection_tb WHERE RASPBERRY_CONNECTION_NO = C.RASPBERRY_CONNECTION_NO) AS EXPOSURE
+				, (SELECT APPELLATION FROM raspberry_connection_tb WHERE RASPBERRY_CONNECTION_NO = C.RASPBERRY_CONNECTION_NO) AS APPELLATION
+				, A.EVENT_NO, A.FUNERAL_NO, A.DM_PHOTO, A.DM_PHOTO_ROTATION, A.DM_NAME, A.DM_AGE, A.DM_REG_NUMBER, A.DM_RELIGION, A.DM_POSITION, A.DM_GENDER
+				, A.DM_ADDR, A.DM_ADDR_DETAIL, A.CM_NAME, A.CM_PHONE, A.CM_COMPANY, A.CM_POSITION, A.ENTRANCE_ROOM_NO
+				, (SELECT FILE FROM status_plate_bg WHERE FUNERAL_NO = A.FUNERAL_NO AND RELIGION_NO = A.DM_RELIGION) AS STATUS_PLATE_BG,
+				 (SELECT APPELLATION FROM raspberry_connection_tb WHERE RASPBERRY_CONNECTION_NO = ENTRANCE_ROOM_NO) AS ENTRANCE_ROOM_NO_NAME,
+				DATE_FORMAT(A.ENTRANCE_ROOM_DT, '%Y-%m-%d %H:%i') AS ENTRANCE_ROOM_DT,
+				DATE_FORMAT(A.ENTRANCE_ROOM_START_DT, '%Y-%m-%d %H:%i') AS ENTRANCE_ROOM_START_DT, 
+				DATE_FORMAT(A.ENTRANCE_ROOM_END_DT, '%Y-%m-%d %H:%i') AS ENTRANCE_ROOM_END_DT,
+				CARRYING_YN, DATE_FORMAT(A.CARRYING_DT, '%Y-%m-%d %H:%i') AS CARRYING_DT, CARRYING_PLACE,
+				DATE_FORMAT(A.DEAD_DT, '%Y-%m-%d %H:%i') AS DEAD_DT, DEAD_CLASSIFY,
+				DEAD_PLACE, DEAD_CAUSE, FUNERAL_SYSTEM,
+				BURIAL_PLOT_NAME, MEDICAL_CERTIFICATE,
+				DIAGNOSIS_YN, DISCHARGE_YN, DRUG_YN, PUBLIC_PROSECUTOR_YN,
+				STORE_INFO, EVENT_ALIVE_FLAG
+				, (SELECT STATUS_PLATE_STYLE_NO FROM status_plate_style WHERE THUMBNAIL = D.STATUS_PLATE_STYLE_NO AND DIVISION = D.DIVISION) AS STATUS_PLATE_STYLE_NO
+				FROM event_tb A LEFT JOIN raspberry_connection_tb B ON A.FUNERAL_NO = B.FUNERAL_NO
+				LEFT JOIN event_raspberry_connection C ON A.EVENT_NO = C.EVENT_NO
+				LEFT JOIN raspberry_status_plate D ON D.RASPBERRY_CONNECTION_NO = B.RASPBERRY_CONNECTION_NO
+				LEFT JOIN raspberry_status_plate E ON E.RASPBERRY_CONNECTION_NO = C.RASPBERRY_CONNECTION_NO
+				WHERE C.ORDER_NO = 1
+				AND A.CHOOMO_FLAG = 0
+				<if test="raspberryConnectionNo != null and raspberryConnectionNo != ''">AND B.RASPBERRY_CONNECTION_NO = ${raspberryConnectionNo}</if>
+				<if test="statusPlate == 'true'">AND NOW() <![CDATA[>=]]> ENTRANCE_ROOM_DT</if>
+				<if test="eventAliveFlag == 'true'">AND EVENT_ALIVE_FLAG = 1</if>
+				ORDER BY B.EXPOSURE, B.APPELLATION ASC, C.RASPBERRY_CONNECTION_NO, A.ENTRANCE_ROOM_DT
+    	) A LEFT JOIN raspberry_status_plate B ON A.MULTI_NO = B.RASPBERRY_CONNECTION_NO
+	</select>
+	<!-- 라즈베리-종합-스타일 없을시:E -->
+	
+	<!-- event_raspberry_connection:S -->
+	<insert id="insertEventRpiConnection" parameterType="hashmap">
+		INSERT INTO event_raspberry_connection(EVENT_NO, RASPBERRY_CONNECTION_NO, ORDER_NO)
+		VALUES
+			<foreach collection="binsoList" item="item" index="index" separator=",">
+				(${eventNo}, #{item.binsoNo}, #{item.orderNo})
+			</foreach>
+	</insert>
+	
+	<delete id="deleteEventRpiConnection" parameterType="hashmap">
+		DELETE 
+		FROM event_raspberry_connection 
+		WHERE EVENT_NO = ${eventNo}
+	</delete>
+	<!-- event_raspberry_connection:E -->
+	
+	
+	
+	<!-- event_family_tb:S -->
+	<select id="selectEventFamily" parameterType="hashmap" resultType="hashmap">
+		SELECT A.EVENT_NO, RELATION, 
+			<![CDATA[GROUP_CONCAT(NAME ORDER BY FAMILY_NO ASC SEPARATOR '^#$%&PB$@!') AS NAMES]]>,
+			<![CDATA[GROUP_CONCAT(NAME ORDER BY FAMILY_NO ASC SEPARATOR ',') AS NAMES_BASIC]]>
+		FROM event_family_tb A LEFT JOIN event_tb B ON A.EVENT_NO = B.EVENT_NO
+		WHERE 1=1
+		<if test="eventNo != null and eventNo != ''">AND A.EVENT_NO = ${eventNo}</if>
+		<if test="eventNos != null and eventNos != ''">AND A.EVENT_NO IN(${eventNos})</if>
+		<if test="funeralNo != null and funeralNo != ''">AND B.FUNERAL_NO = #{funeralNo}</if>
+		GROUP BY RELATION, A.EVENT_NO
+		ORDER BY MIN(FAMILY_NO) ASC
+	</select>
+	
+	<insert id="insertEventFamily" parameterType="hashmap">
+		INSERT INTO event_family_tb(EVENT_NO, RELATION, NAME)
+		VALUES
+			<foreach collection="cmList" item="item" index="index" separator=",">
+				(${eventNo}, #{item.relation}, #{item.name})
+			</foreach>
+	</insert>
+	
+	<delete id="deleteEventFamily" parameterType="hashmap">
+		DELETE FROM event_family_tb WHERE EVENT_NO = ${eventNo}
+	</delete>
+	<!-- event_family_tb:E -->
+	
+	
+	<!-- event_car_tb:S -->
+	<select id="selectEventCar" parameterType="hashmap" resultType="hashmap">
+		SELECT EVENT_NO, CATEGORY, NUMBER, NAME, PHONE
+		FROM event_car_tb
+		WHERE 1=1
+		<if test="eventNo != null and eventNo != ''">AND EVENT_NO = ${eventNo}</if>
+		ORDER BY CATEGORY ASC
+	</select>
+	
+	<insert id="insertEventCar" parameterType="hashmap">
+		INSERT INTO event_car_tb(EVENT_NO, CATEGORY, NUMBER, NAME, PHONE)
+		VALUES
+			<foreach collection="carInfoList" item="item" index="index" separator=",">
+				(#{eventNo}, #{item.category}, #{item.number}, #{item.name}, REPLACE(#{item.phone}, '-', ''))
+			</foreach>
+	</insert>
+	
+	<delete id="deleteEventCar" parameterType="hashmap">
+		DELETE 
+		FROM event_car_tb 
+		WHERE EVENT_NO = ${eventNo}
+	</delete>
+	<!-- event_car_tb:E -->
+
+	<!-- 행사삭제시 정산 부분 삭제:S -->
+	
+	<delete id="deleteEventOrder" parameterType="hashmap">
+		DELETE 
+		FROM event_order_tb 
+		WHERE EVENT_NO = ${eventNo}
+	</delete>
+	
+	<delete id="deleteEventTakeBack" parameterType="hashmap">
+		DELETE 
+		FROM event_take_back_tb 
+		WHERE EVENT_NO = ${eventNo}
+	</delete>
+	
+	<delete id="deleteEventRandomItem" parameterType="hashmap">
+		DELETE 
+		FROM event_random_item 
+		WHERE EVENT_NO = ${eventNo}
+	</delete>
+	
+	<delete id="deleteEventOrderTmp" parameterType="hashmap">
+		DELETE 
+		FROM event_order_tmp
+		WHERE EVENT_NO = ${eventNo}
+	</delete>
+	
+	<delete id="deleteEventTakeBackTmp" parameterType="hashmap">
+		DELETE 
+		FROM event_take_back_tmp
+		WHERE EVENT_NO = ${eventNo}
+	</delete>
+	
+	
+	<!-- 행사삭제시 정산 부분 삭제:E -->
+
+
+	<!-- raspberry_status_plate:S -->
+	<select id="selectRaspberryStatusPlateBinsoList" parameterType="hashmap" resultType="hashmap">
+		SELECT A.STATUS_PLATE_NO, FUNERAL_NO, A.RASPBERRY_CONNECTION_NO, CLASSIFICATION,
+<!-- 			(SELECT GROUP_CONCAT(BINSO_NO ORDER BY AA.EXPOSURE SEPARATOR ',') FROM status_plate_binso WHERE STATUS_PLATE_NO = A.STATUS_PLATE_NO) AS BINSO_LIST, -->
+			(SELECT GROUP_CONCAT(S.BINSO_NO ORDER BY SS.EXPOSURE SEPARATOR ',') FROM status_plate_binso S LEFT JOIN raspberry_connection_tb SS ON S.BINSO_NO = SS.RASPBERRY_CONNECTION_NO WHERE S.STATUS_PLATE_NO = A.STATUS_PLATE_NO) AS BINSO_LIST,
+			A.STATUS_PLATE_STYLE_NO,
+		    B.FILE AS STATUS_PLATE_STYLE_FILE, THUMBNAIL, 
+		    SCREEN_MODE, FONT_TYPE, 
+		    ARROW_NO, ARROW_FLAG, 
+		    SLIDE_EFFECT, SLIDE_SEC, 
+		    BOTTOM_TEXT, DIVISION_MODE, A.DIVISION,
+		    SCREEN_TYPE, NAME, STATUS, CHIEF_MOURNER,
+			ER_START, ER_START_TIME, 
+			CARRING_START, CARRING_START_TIME,
+			BURIAL_PLOT, BURIAL_PLOT_NAME, A.MULTI_MODE, A.MULTI_NAME,
+		    A.CREATE_USER_NO, A.UPDATE_USER_NO,
+			DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d') AS CREATE_DT,
+			DATE_FORMAT(A.UPDATE_DT, '%Y-%m-%d') AS UPDATE_DT
+		FROM raspberry_status_plate A LEFT JOIN raspberry_connection_tb AA ON A.RASPBERRY_CONNECTION_NO = AA.RASPBERRY_CONNECTION_NO
+		LEFT JOIN status_plate_style B ON A.STATUS_PLATE_STYLE_NO = B.STATUS_PLATE_STYLE_NO
+		WHERE 1=1
+		<if test="funeralNo != null and funeralNo != ''">AND FUNERAL_NO = ${funeralNo}</if>
+		<if test="classification != null and classification != ''">AND CLASSIFICATION = ${classification}</if>
+		<if test="statusPlateNo != null and statusPlateNo != ''">AND A.STATUS_PLATE_NO = ${statusPlateNo}</if>
+		<if test="raspberryConnectionNo != null and raspberryConnectionNo != ''">AND A.RASPBERRY_CONNECTION_NO = ${raspberryConnectionNo}</if>
+	</select>
+	
+	<select id="selectRaspberryStatusPlateList" parameterType="hashmap" resultType="hashmap">
+		SELECT A.STATUS_PLATE_NO, FUNERAL_NO, A.RASPBERRY_CONNECTION_NO, CLASSIFICATION,
+<!-- 			(SELECT GROUP_CONCAT(BINSO_NO ORDER BY AA.EXPOSURE SEPARATOR ',') FROM status_plate_binso WHERE STATUS_PLATE_NO = A.STATUS_PLATE_NO) AS BINSO_LIST, -->
+			(SELECT GROUP_CONCAT(S.BINSO_NO ORDER BY SS.EXPOSURE, SS.RASPBERRY_CONNECTION_NO SEPARATOR ',') FROM status_plate_binso S LEFT JOIN raspberry_connection_tb SS ON S.BINSO_NO = SS.RASPBERRY_CONNECTION_NO WHERE S.STATUS_PLATE_NO = A.STATUS_PLATE_NO) AS BINSO_LIST,
+<!-- 			A.STATUS_PLATE_STYLE_NO, -->
+			B.STATUS_PLATE_STYLE_NO,
+		    B.FILE AS STATUS_PLATE_STYLE_FILE, THUMBNAIL, 
+		    SCREEN_MODE, FONT_TYPE, 
+		    ARROW_NO, ARROW_FLAG, 
+		    SLIDE_EFFECT, SLIDE_SEC, 
+		    BOTTOM_TEXT, DIVISION_MODE, A.DIVISION,
+		    SCREEN_TYPE, NAME, STATUS, CHIEF_MOURNER,
+			ER_START, ER_START_TIME, 
+			CARRING_START, CARRING_START_TIME,
+			BURIAL_PLOT, BURIAL_PLOT_NAME, MULTI_MODE, MULTI_NAME,
+		    A.CREATE_USER_NO, A.UPDATE_USER_NO,
+			DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d') AS CREATE_DT,
+			DATE_FORMAT(A.UPDATE_DT, '%Y-%m-%d') AS UPDATE_DT
+		FROM raspberry_status_plate A LEFT JOIN raspberry_connection_tb AA ON A.RASPBERRY_CONNECTION_NO = AA.RASPBERRY_CONNECTION_NO
+		LEFT JOIN status_plate_style B ON A.STATUS_PLATE_STYLE_NO = B.THUMBNAIL AND A.DIVISION = B.DIVISION
+		WHERE 1=1
+		<if test="funeralNo != null and funeralNo != ''">AND FUNERAL_NO = ${funeralNo}</if>
+		<if test="classification != null and classification != ''">AND CLASSIFICATION = ${classification}</if>
+		<if test="statusPlateNo != null and statusPlateNo != ''">AND A.STATUS_PLATE_NO = ${statusPlateNo}</if>
+		<if test="raspberryConnectionNo != null and raspberryConnectionNo != ''">AND A.RASPBERRY_CONNECTION_NO = ${raspberryConnectionNo}</if>
+	</select>
+	
+	<insert id="insertRaspberryStatusPlate" parameterType="hashmap" useGeneratedKeys="true" keyProperty="STATUS_PLATE_NO">
+		INSERT INTO raspberry_status_plate(RASPBERRY_CONNECTION_NO, STATUS_PLATE_STYLE_NO, SCREEN_MODE, FONT_TYPE, ARROW_NO, ARROW_FLAG, 
+			SLIDE_EFFECT, SLIDE_SEC, BOTTOM_TEXT, DIVISION_MODE, DIVISION, SCREEN_TYPE, MULTI_MODE, MULTI_NAME, CREATE_USER_NO)
+		VALUES(#{raspberryConnectionNo}, #{statusPlateStyleNo}, #{screenMode}, #{fontType}, #{arrowNo}, #{arrowFlag}, 
+			#{slideEffect}, #{slideSec}, #{bottomText}, #{divisionMode}, #{division}, #{screenType}, #{multiMode}, #{multiName}, #{actionUserNo})
+	</insert>
+	
+	<update id="updateRaspberryStatusPlate" parameterType="hashmap">
+		UPDATE raspberry_status_plate
+		SET STATUS_PLATE_STYLE_NO = #{statusPlateStyleNo} 
+<!-- 			, STATUS_PLATE_BG_NO = #{statusPlateBgNo} -->
+			, SCREEN_MODE = #{screenMode}, FONT_TYPE = #{fontType}
+			, BOTTOM_TEXT = #{bottomText}
+			, ARROW_NO = #{arrowNo}
+			, ARROW_FLAG = #{arrowFlag}
+			, SLIDE_EFFECT = #{slideEffect}
+			, SLIDE_SEC = #{slideSec}
+			, DIVISION_MODE = #{divisionMode}
+			, DIVISION = #{division}
+			, SCREEN_TYPE = #{screenType}
+			, MULTI_MODE = #{multiMode}
+			, MULTI_NAME = #{multiName}
+			, UPDATE_DT = NOW(), UPDATE_USER_NO = ${actionUserNo} 
+		WHERE STATUS_PLATE_NO = ${statusPlateNo}
+		AND RASPBERRY_CONNECTION_NO = ${raspberryConnectionNo}
+	</update>
+	<!-- raspberry_status_plate:E -->
+	
+	
+	
+	<!-- status_plate_binso:S -->
+	<insert id="insertStatusPlateBinso" parameterType="hashmap">
+		INSERT INTO status_plate_binso(STATUS_PLATE_NO, BINSO_NO)
+		VALUES
+			<foreach collection="binsoList" item="item" index="index" separator=",">
+				(${statusPlateNo}, ${item})
+			</foreach>
+	</insert>
+	
+	<delete id="deleteStatusPlateBinso" parameterType="hashmap">
+		DELETE FROM status_plate_binso WHERE STATUS_PLATE_NO = ${statusPlateNo}
+	</delete>
+	<!-- status_plate_binso:E -->
+	
+	
+	
+	<!-- status_plate_style:S -->
+	<select id="selectStatusPlateStyle" parameterType="hashmap" resultType="hashmap">
+		SELECT STATUS_PLATE_STYLE_NO, FLAG, THUMBNAIL, DIVISION,
+			FILE, NAME, STATUS, CHIEF_MOURNER,
+			ER_START, ER_START_TIME, 
+		    CARRING_START, CARRING_START_TIME,
+		    BURIAL_PLOT, BURIAL_PLOT_NAME, FLAG
+		FROM status_plate_style
+		WHERE 1=1
+<!-- 		<if test="thumbnail != null and thumbnail != ''">AND THUMBNAIL IS NULL</if> -->
+		<if test="thumbnail != null and thumbnail != ''">AND THUMBNAIL = #{thumbnail}</if>
+		<if test="division != null and division != ''">AND DIVISION = #{division}</if>
+		<if test="fileName != null and fileName != ''">AND FILE LIKE CONCAT(#{fileName}, '%')</if>
+		<if test="statusPlateStyleBasic == 'true'">AND STATUS_PLATE_STYLE_NO = 42</if>
+		<if test="flag != null and flag != ''">AND FLAG = #{flag}</if>
+		<if test="statusPlateStyleNo != null and statusPlateStyleNo != ''">AND STATUS_PLATE_STYLE_NO = #{statusPlateStyleNo}</if>
+		ORDER BY FILE ASC
+	</select>
+	<!-- status_plate_style:S -->
+	
+	
+	
+	<!-- status_plate_bg:S -->
+	<select id="selectStatusPlateBg" parameterType="hashmap" resultType="hashmap">
+		SELECT FUNERAL_NO, RELIGION_NO, FILE
+		FROM status_plate_bg
+		WHERE 1=1
+		<if test="funeralNo != null and funeralNo != ''">
+			AND FUNERAL_NO = ${funeralNo}
+		</if>
+		ORDER BY RELIGION_NO ASC
+	</select>
+	
+	<insert id="resetStatusPlateBg" parameterType="hashmap">
+		INSERT INTO status_plate_bg(FUNERAL_NO, RELIGION_NO, FILE)
+		VALUES
+			<foreach collection="list" item="item" index="index" separator=",">
+				(${funeralNo}, ${item.religionNo}, #{item.file})
+			</foreach>
+	</insert>
+	
+	<insert id="insertStatusPlateBg" parameterType="hashmap">
+		INSERT INTO status_plate_bg(FUNERAL_NO, RELIGION_NO, FILE)
+		VALUES(${funeralNo}, ${religionNo}, #{file}) 
+		ON 
+		DUPLICATE KEY 
+		UPDATE 
+		FUNERAL_NO = ${funeralNo}
+		, RELIGION_NO = ${religionNo}
+		, FILE = #{file}
+	</insert>
+	
+	<delete id="deleteStatusPlateBg" parameterType="hashmap">
+		DELETE FROM status_plate_bg
+		WHERE FUNERAL_NO = ${funeralNo}
+	</delete>
+	<!-- status_plate_bg:S -->
+	
+	<!-- status_plate_files:S -->
+	<select id="selectStatusPlateFiles" parameterType="hashmap" resultType="hashmap">
+		SELECT STATUS_PLATE_NO, PRIORITY, FILE
+		FROM status_plate_files
+		WHERE STATUS_PLATE_NO = ${statusPlateNo}
+		ORDER BY PRIORITY ASC
+	</select>
+	
+	<insert id="insertStatusPlateFiles" parameterType="hashmap">
+		INSERT INTO status_plate_files(STATUS_PLATE_NO, PRIORITY, FILE)
+		VALUES
+			<foreach collection="fileList" item="item" index="index" separator=",">
+				(${statusPlateNo}, ${item.fileKey}, #{item.fileFullPath})
+			</foreach>
+	</insert>
+	
+	<delete id="deleteStatusPlateFiles" parameterType="hashmap">
+		DELETE FROM status_plate_files
+		WHERE STATUS_PLATE_NO = ${statusPlateNo}
+		<if test="notDeletePriority != null and notDeletePriority != ''">
+			AND PRIORITY NOT IN (${notDeletePriority})
+		</if>
+	</delete>
+	<!-- status_plate_files:S -->
+	
+	<!-- 행사 현황판 (공실포함) -->
+	<select id="selectAllEventList" parameterType="hashmap" resultType="hashmap">
+		SELECT C.RASPBERRY_CONNECTION_NO, E.BINSO_RASPBERRY_CONNECTION_NO, CLASSIFICATION, APPELLATION, BUILDING_NAME, FLOOR, EXPOSURE, AREA_SIZE, D.*
+		FROM raspberry_connection_tb C LEFT JOIN (
+			SELECT A.EVENT_NO, A.FUNERAL_NO, 
+				RASPBERRY_CONNECTION_NO AS RPI_NO,
+				B.ORDER_NO, DM_PHOTO, DM_PHOTO_ROTATION, DM_NAME, DM_AGE, DM_REG_NUMBER, DM_RELIGION, 
+				(SELECT KO FROM common_code_tb WHERE TARGET = 'RELIGION' AND VALUE = A.DM_RELIGION) AS DM_RELIGION_NAME,
+				DM_POSITION, DM_GENDER,
+				DM_ADDR, DM_ADDR_DETAIL,
+				CM_NAME, CM_PHONE, CM_COMPANY, CM_POSITION,
+				ENTRANCE_ROOM_NO, (SELECT APPELLATION FROM raspberry_connection_tb WHERE RASPBERRY_CONNECTION_NO = ENTRANCE_ROOM_NO) AS ENTRANCE_ROOM_NO_NAME,
+				DATE_FORMAT(A.ENTRANCE_ROOM_DT, '%Y-%m-%dT%H:%i') AS ENTRANCE_ROOM_DT,
+				DATE_FORMAT(A.ENTRANCE_ROOM_START_DT, '%Y-%m-%dT%H:%i') AS ENTRANCE_ROOM_START_DT, 
+				DATE_FORMAT(A.ENTRANCE_ROOM_END_DT, '%Y-%m-%dT%H:%i') AS ENTRANCE_ROOM_END_DT,
+				CARRYING_YN, DATE_FORMAT(A.CARRYING_DT, '%Y-%m-%dT%H:%i') AS CARRYING_DT, CARRYING_PLACE,
+                SUM((IF(D.PRICE, D.PRICE, 0) + IF(F.PRICE, F.PRICE, 0) - IF(E.PRICE, E.PRICE, 0) - IF(G.PRICE, G.PRICE, 0))) AS RST_PRICE,
+				DATE_FORMAT(A.DEAD_DT, '%Y-%m-%d %H:%i') AS DEAD_DT, DEAD_CLASSIFY,
+				DEAD_PLACE, DEAD_CAUSE, FUNERAL_SYSTEM,
+				BURIAL_PLOT_NAME, MEDICAL_CERTIFICATE,
+				DIAGNOSIS_YN, DISCHARGE_YN,
+				DRUG_YN, PUBLIC_PROSECUTOR_YN, A.BIGO,
+				A.CREATE_USER_NO, A.UPDATE_USER_NO,
+				DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d') AS CREATE_DT,
+				DATE_FORMAT(A.UPDATE_DT, '%Y-%m-%d') AS UPDATE_DT,
+                (SELECT group_concat(NAME) FROM event_family_tb AA WHERE AA.EVENT_NO = A.EVENT_NO) AS FAMILY
+			FROM event_tb A LEFT JOIN event_raspberry_connection B ON A.EVENT_NO = B.EVENT_NO
+			LEFT JOIN (SELECT A.EVENT_NO, SUM(A.CNT * IF(B.VAT_FLAG = 1, B.PRICE, B.PRICE+B.PRICE*0.1)) AS PRICE FROM event_order_tb A LEFT JOIN funeral_item_tb B ON A.ITEM_NO = B.ITEM_NO GROUP BY EVENT_NO) D ON A.EVENT_NO = D.EVENT_NO
+			LEFT JOIN (SELECT A.EVENT_NO, SUM(A.CNT * IF(B.VAT_FLAG = 1, B.PRICE, B.PRICE+B.PRICE*0.1)) AS PRICE FROM event_take_back_tb A LEFT JOIN funeral_item_tb B ON A.ITEM_NO = B.ITEM_NO GROUP BY EVENT_NO) E ON A.EVENT_NO = E.EVENT_NO
+			LEFT JOIN (SELECT A.EVENT_NO, SUM(A.CNT * IF(B.VAT_FLAG = 1, B.PRICE, B.PRICE+B.PRICE*0.1)) AS PRICE FROM event_order_tb A LEFT JOIN event_random_item B ON A.RANDOM_ITEM_NO = B.RANDOM_ITEM_NO AND A.EVENT_NO = B.EVENT_NO GROUP BY EVENT_NO) F ON A.EVENT_NO = F.EVENT_NO
+            LEFT JOIN (SELECT A.EVENT_NO, SUM(A.CNT * IF(B.VAT_FLAG = 1, B.PRICE, B.PRICE+B.PRICE*0.1)) AS PRICE FROM event_take_back_tb A LEFT JOIN event_random_item B ON A.RANDOM_ITEM_NO = B.RANDOM_ITEM_NO AND A.EVENT_NO = B.EVENT_NO GROUP BY EVENT_NO) G ON A.EVENT_NO = G.EVENT_NO
+	        WHERE EVENT_ALIVE_FLAG = 1 
+	        AND A.CHOOMO_FLAG = 0
+	        <if test="orderNo != null and orderNo != ''">AND B.ORDER_NO = #{orderNo}</if>
+<!-- 			<if test="statusPlate == 'true'">AND NOW() BETWEEN ENTRANCE_ROOM_DT AND CARRYING_DT</if> -->
+			<if test="statusPlate == 'true'">AND NOW() <![CDATA[>=]]> ENTRANCE_ROOM_DT</if>
+			<if test="statusPlate == 'false'">AND NOW() <![CDATA[<]]> ENTRANCE_ROOM_DT</if>
+			GROUP BY A.EVENT_NO, B.RASPBERRY_CONNECTION_NO
+		) D ON C.RASPBERRY_CONNECTION_NO = D.RPI_NO LEFT JOIN raspberry_tb E ON C.RASPBERRY_CONNECTION_NO = E.BINSO_RASPBERRY_CONNECTION_NO
+		WHERE CLASSIFICATION = 10
+		AND C.FLAG = 1
+		<if test="funeralNo != null and funeralNo != ''">AND C.FUNERAL_NO = ${funeralNo}</if>
+		<if test="searchText != null and searchText != ''">
+      	  	AND (D.CM_NAME LIKE CONCAT('%', #{searchText},'%') OR D.FAMILY LIKE CONCAT('%', #{searchText},'%')) 
+		</if>
+		<if test="order != null and order != ''">ORDER BY ${order}</if>
+	</select>
+	
+	<!-- 현황판(화면관리) -->
+	<select id="selectRpiScreen" parameterType="hashmap" resultType="hashmap">
+		SELECT RASPBERRY_ID, A.FUNERAL_NO, B.FUNERAL_NAME,
+			A.RASPBERRY_CONNECTION_NO, CLASSIFICATION,
+		    (SELECT KO FROM common_code_tb WHERE VALUE = C.CLASSIFICATION AND TARGET = 'RASPBERRY_CONNECTION_CLASSIFICATION') AS CLASSIFICATION_NAME,
+		    APPELLATION, BUILDING_NAME, FLOOR, AREA_SIZE, MEMO,
+		    A.DEVICE_CODE, A.CREATE_USER_NO, A.UPDATE_USER_NO,
+		    DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d') AS CREATE_DT,
+			DATE_FORMAT(A.UPDATE_DT, '%Y-%m-%d') AS UPDATE_DT
+		FROM raspberry_tb A LEFT JOIN funeral_info_tb B ON A.FUNERAL_NO = B.FUNERAL_NO
+		LEFT JOIN raspberry_connection_tb C ON A.RASPBERRY_CONNECTION_NO = C.RASPBERRY_CONNECTION_NO
+		WHERE 1=1
+	</select>
+	
+	<!-- 영정업체 관리:S -->
+	<sql id="selectPhotoManagerSql">
+		SELECT A.FUNERAL_NO, FUNERAL_NAME, BOSS_NAME, 
+			ADDRESS, PHOTO_MANAGER_NO, 
+			B.NAME, B.PHONE, COMPANY_NAME
+		FROM funeral_info_tb A LEFT JOIN user_tb B ON A.PHOTO_MANAGER_NO = B.USER_NO
+		WHERE LV = 39
+		<if test="photoManagerNo != null and photoManagerNo != ''">AND PHOTO_MANAGER_NO = ${photoManagerNo}</if>
+		AND PHOTO_MANAGER_NO IS NOT NULL
+	</sql>
+	
+	<select id="selectPhotoManagerTotalCount" parameterType="hashmap" resultType="string">
+		SELECT COUNT(*) AS total FROM (<include refid="selectPhotoManagerSql"/>) A
+	</select>
+	
+	<select id="selectPhotoManagerList" parameterType="hashmap" resultType="hashmap">
+		<include refid="selectPhotoManagerSql"/>
+		<if test="order != null and order != ''">ORDER BY ${order}</if>
+		<if test="queryPage != null and queryPage != ''">LIMIT ${queryPage}, ${display}</if>
+	</select>
+	
+	<insert id="insertPhotoManager" parameterType="hashmap">
+		
+	</insert>
+	
+	<update id="updatePhotoManager" parameterType="hashmap">
+		UPDATE event_tb
+		SET EVENT_NO = EVENT_NO,
+			<if test="dmPhoto != null and dmPhoto != ''">DM_PHOTO = #{dmPhoto},</if>
+			<if test="dmPhotoRotation == null or dmPhotoRotation == ''">DM_PHOTO_ROTATION = null,</if>
+			<if test="dmPhotoRotation != null and dmPhotoRotation != ''">DM_PHOTO_ROTATION = #{dmPhotoRotation},</if>
+			UPDATE_DT = NOW(), UPDATE_USER_NO = ${actionUserNo}
+		WHERE EVENT_NO = ${eventNo}
+	</update>
+	
+	<delete id="deletePhotoManager" parameterType="hashmap">
+		
+	</delete>
+	<!-- 영정업체 관리:E -->
+	
+	
+	
+	<!-- 영정업체 관리:E -->
+	<delete id="deleteDmPhoto" parameterType="hashmap">
+		UPDATE event_tb
+		SET DM_PHOTO = null
+		WHERE EVENT_NO = ${eventNo}
+	</delete>
+	<!-- 영정업체 관리:E -->
+	
+	
+	
+	<!-- 행사마감:E -->
+	<delete id="updateEventAliveFlag" parameterType="hashmap">
+		UPDATE event_tb
+		SET EVENT_ALIVE_FLAG = ${eventAliveFlag}
+		WHERE EVENT_NO = ${eventNo}
+	</delete>
+	<!-- 행사마감:E -->
+	
+	
+	
+	<sql id="selectLogSql">
+		SELECT LOG_NO, A.USER_NO, ID, NAME, DIVISION, 
+			CASE
+				WHEN DIVISION = 'C'
+		        THEN 'Insert'
+		        WHEN DIVISION = 'U'
+		        THEN 'Update'
+		        WHEN DIVISION = 'D'
+		        THEN 'Delete'
+		        ELSE null
+			END AS DIVISION_TEXT,
+			A.ACTION_CODE, ACTION_TEXT, DATA_STRING,
+		    DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d %T') AS CREATE_DT
+		FROM log_tb A LEFT JOIN log_text_tb B ON A.ACTION_CODE = B.ACTION_CODE
+		LEFT JOIN user_tb C ON A.USER_NO = C.USER_NO
+		WHERE 1=1
+		<if test="searchStartDt != null and searchStartDt != '' and searchEndDt != null and searchEndDt != ''">
+			AND DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d') BETWEEN #{searchStartDt} AND #{searchEndDt}
+		</if>
+		<if test="searchText != null and searchText != ''">
+			AND (ID LIKE CONCAT('%', #{searchText},'%') OR NAME LIKE CONCAT('%', #{searchText},'%'))
+		</if>
+	</sql>
+	
+	<select id="selectLogTotalCount" parameterType="hashmap" resultType="string">
+		SELECT COUNT(*) AS total FROM (<include refid="selectLogSql"/>) A
+	</select>
+	
+	<select id="selectLogList" parameterType="hashmap" resultType="hashmap">
+		<include refid="selectLogSql"/>
+		<if test="order != null and order != ''">ORDER BY ${order}</if>
+		<if test="queryPage != null and queryPage != ''">LIMIT ${queryPage}, ${display}</if>
+	</select>
+	
+	<select id="selectPhotoDetail" parameterType="hashmap" resultType="hashmap">
+		SELECT A.EVENT_NO, A.FUNERAL_NO, A.DM_PHOTO, A.DM_PHOTO_ROTATION
+			,DATE_FORMAT(A.ENTRANCE_ROOM_DT, '%Y-%m-%d %H:%i') AS ENTRANCE_ROOM_DT
+			,DATE_FORMAT(A.ENTRANCE_ROOM_START_DT, '%Y-%m-%d %H:%i') AS ENTRANCE_ROOM_START_DT
+			,DATE_FORMAT(A.ENTRANCE_ROOM_END_DT, '%Y-%m-%d %H:%i') AS ENTRANCE_ROOM_END_DT
+			,DATE_FORMAT(A.CARRYING_DT, '%Y-%m-%d %H:%i') AS CARRYING_DT
+			,DATE_FORMAT(A.DEAD_DT, '%Y-%m-%d %H:%i') AS DEAD_DT
+		FROM event_tb A LEFT JOIN event_raspberry_connection B ON A.EVENT_NO = B.EVENT_NO
+		LEFT JOIN raspberry_connection_tb C ON B.RASPBERRY_CONNECTION_NO = C.RASPBERRY_CONNECTION_NO
+		WHERE A.FUNERAL_NO = #{funeralNo}
+		AND A.EVENT_ALIVE_FLAG = 1
+        AND A.CHOOMO_FLAG = 0
+<!-- 		AND NOW() BETWEEN ENTRANCE_ROOM_DT AND CARRYING_DT -->
+		AND C.RASPBERRY_CONNECTION_NO = (SELECT BINSO_RASPBERRY_CONNECTION_NO FROM raspberry_tb WHERE RASPBERRY_CONNECTION_NO = #{raspberryConnectionNo})
+        ORDER BY A.ENTRANCE_ROOM_DT
+	</select>
+	
+	
+	<select id="selectFuneralName" parameterType="hashmap" resultType="hashmap">
+		SELECT A.FUNERAL_NO, A.FUNERAL_NAME
+		FROM funeral_info_tb A
+		WHERE A.FUNERAL_NO = #{funeralNo}
+	</select>
+	
+<!-- 	<insert id="insertEventObituary" parameterType="hashmap"> -->
+<!-- 		INSERT INTO biz_msg (MSG_TYPE, CMID, REQUEST_TIME, SEND_TIME, DEST_PHONE, SEND_PHONE, DEST_NAME, -->
+<!-- 		MSG_BODY, TEMPLATE_CODE, SENDER_KEY, NATION_CODE, RE_TYPE, RE_BODY, EVENT_NO) -->
+<!-- 		VALUES (6, CONCAT(#{id}, (SELECT CAST(RAND() * 99999 AS SIGNED) + 10000)), NOW(), NOW(), REPLACE(#{phone}, '-', ''), '16683120',  #{name} -->
+<!-- 		,#{body}, 'bizp_2020042717425703031506637', '6f937eb28801f1d125824166b55ccfb84c00e51b', '82', 'MMS', #{body},  #{eventNo}); -->
+<!-- 	</insert> -->
+	
+<!-- 	<select id="selectEventObituaryList" parameterType="hashmap" resultType="hashmap"> -->
+<!-- 		SELECT A.* -->
+<!-- 		FROM( -->
+<!-- 			SELECT EVENT_NO, DEST_PHONE, SEND_PHONE, DEST_NAME, REQUEST_TIME -->
+<!-- 				, (SELECT KO FROM common_code_tb WHERE TARGET = 'BIZPPURIO' AND VALUE = CALL_STATUS) AS CALL_STATUS -->
+<!-- 			FROM biz_msg -->
+<!-- 			UNION ALL -->
+<!-- 			SELECT EVENT_NO, DEST_PHONE, SEND_PHONE, DEST_NAME, REQUEST_TIME -->
+<!--     			, (SELECT KO FROM common_code_tb WHERE TARGET = 'BIZPPURIO' AND VALUE = CALL_STATUS) AS CALL_STATUS -->
+<!-- 			FROM biz_log_${date} -->
+<!-- 			WHERE CALL_STATUS IN(7000, 4100) -->
+<!-- 			UNION ALL -->
+<!-- 			SELECT EVENT_NO, DEST_PHONE, SEND_PHONE, DEST_NAME, REQUEST_TIME -->
+<!--     			, (SELECT KO FROM common_code_tb WHERE TARGET = 'BIZPPURIO' AND VALUE = CALL_STATUS) AS CALL_STATUS -->
+<!-- 			FROM biz_log_${date_1} -->
+<!-- 			WHERE CALL_STATUS IN(7000, 4100) -->
+<!-- 			) A -->
+<!-- 		WHERE A.EVENT_NO = ${eventNo} -->
+<!--         ORDER BY A.REQUEST_TIME -->
+<!-- 	</select> -->
+	
+	
+	<select id="selectFuneralMusic" parameterType="hashmap" resultType="hashmap">
+		SELECT *
+		FROM music_tb A
+		WHERE A.FUNERAL_NO = #{funeralNo} AND ALIVE_FLAG=1
+	</select>
+		
+	<select id="selectRaspForMusic" parameterType="hashmap" resultType="hashmap">
+		SELECT * FROM raspberry_tb A LEFT JOIN raspberry_connection_tb B ON A.RASPBERRY_CONNECTION_NO = B.RASPBERRY_CONNECTION_NO 
+ 		WHERE A.FUNERAL_NO = #{funeralNo} 
+ 		ORDER BY B.EXPOSURE, RASPBERRY_ID ASC
+	</select>
+		
+	<insert id="insertFuneralMusic" parameterType="hashmap">
+		INSERT INTO music_tb(MUSIC_TITLE, MUSIC_PATH, FUNERAL_NO, ALIVE_FLAG)
+		VALUES(#{title}, #{filePath}, #{funeralNo}, '1')
+	</insert>
+	
+	<delete id="deleteFuneralMusic" parameterType="hashmap">
+		UPDATE music_tb
+		SET ALIVE_FLAG = 0
+		WHERE MUSIC_NO = #{musicNo}
+	</delete>
+	
+	<update id="updateFuneralMusic" parameterType="hashmap">
+		UPDATE music_tb
+		SET MUSIC_TITLE = #{title}
+			, MUSIC_PATH = #{oriFileName}
+		WHERE MUSIC_NO = #{musicNo}
+	</update>
+	
+	<update id="updateRaspForMusic" parameterType="hashmap">
+		UPDATE raspberry_tb
+		SET MUSIC_NO = #{musicNo}
+		WHERE RASPBERRY_ID = #{raspberryId}
+	</update>
+
+	<select id="selectEvtForMusic" parameterType="hashmap" resultType="hashmap">
+		SELECT * FROM music_tb A left join raspberry_tb B ON A.MUSIC_NO=B.MUSIC_NO  where RASPBERRY_ID =#{raspberryId};
+	</select>
+	
+	<select id="selectEventForApi" parameterType="hashmap" resultType="hashmap">
+		select A.EVENT_NO
+ 		, (select group_concat(FAMILY ORDER BY FAMILY_NO)
+			from(
+				select CONCAT(RELATION, '!:', group_concat(NAME ORDER BY FAMILY_NO), '!/') AS FAMILY, EVENT_NO, MAX(FAMILY_NO) AS FAMILY_NO
+				from (
+						select RELATION, NAME, FAMILY_NO, EVENT_NO
+						from event_family_tb
+						group by RELATION, FAMILY_NO) AA
+				group by AA.RELATION, AA.EVENT_NO
+			) AAA
+			WHERE AAA.EVENT_NO = A.EVENT_NO) AS FAMILY
+		, A.FUNERAL_NO
+		, A.DM_NAME
+		, A.DM_PHOTO
+		, A.BURIAL_PLOT_NAME
+		, DATE_FORMAT(A.ENTRANCE_ROOM_START_DT, '%Y-%m-%d %H:%i') AS ENTRANCE_ROOM_START_DT
+		, DATE_FORMAT(A.CARRYING_DT, '%Y-%m-%d %H:%i') AS CARRYING_DT
+		, B.RASPBERRY_CONNECTION_NO
+		, C.APPELLATION
+		from event_tb A LEFT JOIN event_raspberry_connection B ON A.EVENT_NO = B.EVENT_NO
+		LEFT JOIN raspberry_connection_tb C ON B.RASPBERRY_CONNECTION_NO = C.RASPBERRY_CONNECTION_NO
+		where A.FUNERAL_NO = #{funeralNo}
+		AND A.EVENT_ALIVE_FLAG = 1
+		AND A.CHOOMO_FLAG = 0
+	</select>
+	
+	<select id="selectJonghapBinsoForPreview" parameterType="hashmap" resultType="hashmap">
+		SELECT SPB.BINSO_NO AS RASPBERRY_CONNECTION_NO, EVT.EVENT_NO, EVT.FUNERAL_NO, EVT.DM_PHOTO, EVT.DM_GENDER, EVT.DM_PHOTO_ROTATION, EVT.DM_NAME, EVT.DM_RELIGION, EVT.DM_POSITION, EVT.DM_AGE, EVT.ENTRANCE_ROOM_DT, EVT.ENTRANCE_ROOM_START_DT, EVT.CARRYING_DT, EVT.BURIAL_PLOT_NAME , EVT.CARRYING_YN, RCT.APPELLATION, RCT.EXPOSURE, 
+         (select group_concat(FAMILY ORDER BY FAMILY_NO SEPARATOR "")
+			from(
+				select CONCAT(RELATION, '!:', group_concat(NAME ORDER BY FAMILY_NO), '!/') AS FAMILY, EVENT_NO, MAX(FAMILY_NO) AS FAMILY_NO
+				from (
+						select RELATION, NAME, FAMILY_NO, EVENT_NO
+						from event_family_tb
+						group by RELATION, FAMILY_NO) AA
+				group by AA.RELATION, AA.EVENT_NO
+			) AAA
+			WHERE AAA.EVENT_NO = EVT.EVENT_NO) AS FAMILY
+            , RSP2.ARROW_NO
+        FROM dongsung.raspberry_status_plate RSP 
+		LEFT JOIN status_plate_binso SPB ON SPB.STATUS_PLATE_NO = RSP.STATUS_PLATE_NO
+		LEFT JOIN event_raspberry_connection ERC ON ERC.RASPBERRY_CONNECTION_NO = SPB.BINSO_NO
+		LEFT JOIN raspberry_connection_tb RCT ON RCT.RASPBERRY_CONNECTION_NO = ERC.RASPBERRY_CONNECTION_NO
+		LEFT JOIN event_tb EVT ON ERC.EVENT_NO = EVT.EVENT_NO
+        LEFT JOIN raspberry_status_plate RSP2 ON SPB.BINSO_NO = RSP2.RASPBERRY_CONNECTION_NO
+		WHERE RSP.RASPBERRY_CONNECTION_NO = #{raspberryConnectionNo}
+		AND EVT.EVENT_ALIVE_FLAG = 1
+		AND EVT.CHOOMO_FLAG = 0
+		<!-- AND ERC.ORDER_NO=1 -->
+		AND NOW() >= EVT.ENTRANCE_ROOM_DT
+		ORDER BY RCT.EXPOSURE ASC, SPB.BINSO_NO ASC, EVT.ENTRANCE_ROOM_DT, ERC.ORDER_NO
+	</select>
+	
+	<select id="selectJonghapAttrForPreview" parameterType="hashmap" resultType="hashmap">
+		SELECT * FROM dongsung.raspberry_status_plate RSP 
+		LEFT JOIN raspberry_connection_tb RCT ON RSP.RASPBERRY_CONNECTION_NO = RCT.RASPBERRY_CONNECTION_NO
+		WHERE RSP.RASPBERRY_CONNECTION_NO = #{raspberryConnectionNo}
+	</select>
+	<select id="selectJonghapStyleForPreview" parameterType="hashmap" resultType="hashmap">
+		SELECT RSP.STATUS_PLATE_NO, RSP.RASPBERRY_CONNECTION_NO, RSP.STATUS_PLATE_STYLE_NO, RSP.STATUS_PLATE_BG_NO, RSP.SCREEN_MODE, RSP.FONT_TYPE, RSP.ARROW_NO, RSP.ARROW_FLAG, RSP.SLIDE_EFFECT, RSP.SLIDE_SEC, RSP.BOTTOM_TEXT, RSP.DIVISION_MODE, RSP.DIVISION, RSP.SCREEN_TYPE, RSP.MULTI_MODE, RSP.MULTI_NAME, SPS.STATUS_PLATE_STYLE_NO, SPS.FLAG, SPS.FILE, SPS.THUMBNAIL, SPS.DIVISION AS SPS_DIVISION, SPS.NAME, SPS.STATUS, SPS.CHIEF_MOURNER, SPS.ER_START, SPS.ER_START_TIME, SPS.CARRING_START, SPS.CARRING_START_TIME, SPS.BURIAL_PLOT, SPS.BURIAL_PLOT_NAME 
+        FROM raspberry_status_plate RSP
+		LEFT JOIN status_plate_style SPS ON RSP.STATUS_PLATE_STYLE_NO = SPS.THUMBNAIL
+		WHERE RSP.RASPBERRY_CONNECTION_NO = #{raspberryConnectionNo}
+	</select>
+		<select id="selectJonghapFuneralForPreview" parameterType="hashmap" resultType="hashmap">
+		SELECT * FROM raspberry_connection_tb RCT
+		LEFT JOIN funeral_info_tb FIT ON FIT.FUNERAL_NO=RCT.FUNERAL_NO
+		where RCT.RASPBERRY_CONNECTION_NO = #{raspberryConnectionNo}
+	</select>
+	
+	<select id="selectPreviewWhoIAm" parameterType="hashmap" resultType="hashmap">
+		SELECT A.*, B.FUNERAL_FLAG, C.RASPBERRY_ID, C.AUTORIZED_IP, C.PRIVATE_IP
+		FROM dongsung.raspberry_connection_tb A LEFT JOIN funeral_info_tb B ON A.FUNERAL_NO = B.FUNERAL_NO
+        LEFT JOIN raspberry_tb C ON A.RASPBERRY_CONNECTION_NO = C.RASPBERRY_CONNECTION_NO
+		WHERE A.RASPBERRY_CONNECTION_NO = #{raspberryConnectionNo};
+	</select>
+	
+	<select id="selectPreviewFindBinsoEvent" parameterType="hashmap" resultType="hashmap">
+		SELECT ERC.EVENT_NO, RCT.FUNERAL_NO, RCT.RASPBERRY_CONNECTION_NO, RT.RASPBERRY_ID
+        FROM raspberry_connection_tb RCT 
+        LEFT JOIN event_raspberry_connection ERC ON ERC.RASPBERRY_CONNECTION_NO = RCT.RASPBERRY_CONNECTION_NO
+		LEFT JOIN event_tb EVT ON ERC.EVENT_NO = EVT.EVENT_NO
+        LEFT JOIN raspberry_tb RT ON RT.RASPBERRY_CONNECTION_NO = RCT.RASPBERRY_CONNECTION_NO
+		WHERE RCT.RASPBERRY_CONNECTION_NO = #{raspberryConnectionNo}
+		AND EVT.EVENT_ALIVE_FLAG = 1
+		AND EVT.CHOOMO_FLAG = 0
+		AND NOW() <![CDATA[>=]]> EVT.ENTRANCE_ROOM_DT
+	</select>
+	
+	<select id="selectPreviewSYIPEvent" parameterType="hashmap" resultType="hashmap">
+		SELECT ERC.EVENT_NO, RCT.FUNERAL_NO, RCT.RASPBERRY_CONNECTION_NO, RT.RASPBERRY_ID
+        FROM raspberry_connection_tb RCT 
+        LEFT JOIN event_raspberry_connection ERC ON ERC.RASPBERRY_CONNECTION_NO = RCT.RASPBERRY_CONNECTION_NO
+		LEFT JOIN event_tb EVT ON ERC.EVENT_NO = EVT.EVENT_NO
+        LEFT JOIN raspberry_tb RT ON RT.RASPBERRY_CONNECTION_NO = RCT.RASPBERRY_CONNECTION_NO
+		WHERE EVT.ENTRANCE_ROOM_NO = #{raspberryConnectionNo}
+		AND EVT.EVENT_ALIVE_FLAG = 1
+		AND EVT.CHOOMO_FLAG = 0
+		AND NOW() BETWEEN EVT.ENTRANCE_ROOM_START_DT AND EVT.ENTRANCE_ROOM_END_DT
+        LIMIT 1
+	</select>
+	
+	
+	<select id="selectPreviewSYIPStyle" parameterType="hashmap" resultType="hashmap">
+		SELECT *
+		FROM status_plate_style
+		WHERE STATUS_PLATE_STYLE_NO = (
+			SELECT MAX(STATUS_PLATE_STYLE_NO)
+			FROM status_plate_style
+			WHERE THUMBNAIL = (
+				SELECT B.THUMBNAIL
+				FROM raspberry_status_plate A LEFT JOIN raspberry_connection_tb AA ON A.RASPBERRY_CONNECTION_NO = AA.RASPBERRY_CONNECTION_NO
+				LEFT JOIN status_plate_style B ON A.STATUS_PLATE_STYLE_NO = B.STATUS_PLATE_STYLE_NO
+				WHERE 1=1
+				AND A.RASPBERRY_CONNECTION_NO = #{raspberryConnectionNo}
+				LIMIT 1)
+			)
+	</select>
+	
+	
+	<select id="selectPreviewFindMultiMode" parameterType="hashmap" resultType="hashmap">
+		SELECT RCT.EXPOSURE, RT.RASPBERRY_CONNECTION_NO, RCT.APPELLATION FROM raspberry_status_plate RSP 
+		LEFT JOIN raspberry_tb RT ON RSP.RASPBERRY_CONNECTION_NO = RT.RASPBERRY_CONNECTION_NO
+		LEFT JOIN raspberry_connection_tb RCT ON RT.RASPBERRY_CONNECTION_NO = RCT.RASPBERRY_CONNECTION_NO
+		WHERE RT.FUNERAL_NO = #{funeralNo}
+		AND RSP.MULTI_MODE=1
+		AND RSP.MULTI_NAME = #{multiName}
+		ORDER BY RCT.EXPOSURE ASC, RASPBERRY_CONNECTION_NO ASC
+	</select>
+	
+	<select id="selectEventForFuneralPreview" parameterType="hashmap" resultType="hashmap">
+		SELECT A.EVENT_NO
+ 		, (SELECT group_concat(FAMILY ORDER BY FAMILY_NO)
+			FROM(
+				SELECT CONCAT(RELATION, '!:', group_concat(NAME ORDER BY FAMILY_NO), '!/') AS FAMILY, EVENT_NO, MAX(FAMILY_NO) AS FAMILY_NO
+				from (
+						SELECT RELATION, NAME, FAMILY_NO, EVENT_NO
+						FROM event_family_tb
+						GROUP BY RELATION, FAMILY_NO) AA
+				GROUP BY AA.RELATION, AA.EVENT_NO
+			) AAA
+			WHERE AAA.EVENT_NO = A.EVENT_NO) AS FAMILY
+		, A.FUNERAL_NO
+		, A.DM_NAME
+		, A.DM_PHOTO
+		, A.BURIAL_PLOT_NAME
+		, DATE_FORMAT(A.ENTRANCE_ROOM_START_DT, '%Y-%m-%d %H:%i') AS ENTRANCE_ROOM_START_DT
+		, DATE_FORMAT(A.CARRYING_DT, '%Y-%m-%d %H:%i') AS CARRYING_DT
+		, B.RASPBERRY_CONNECTION_NO
+		, C.APPELLATION
+		FROM event_tb A LEFT JOIN event_raspberry_connection B ON A.EVENT_NO = B.EVENT_NO
+		LEFT JOIN raspberry_connection_tb C ON B.RASPBERRY_CONNECTION_NO = C.RASPBERRY_CONNECTION_NO
+		WHERE A.FUNERAL_NO = #{funeralNo}
+		AND A.EVENT_ALIVE_FLAG = 1
+		AND A.CHOOMO_FLAG = 0
+		AND C.CLASSIFICATION = 10
+		ORDER BY C.EXPOSURE ASC , C.CREATE_DT ASC
+	</select>
+	
+	<select id="selectSpecialPreview" parameterType="hashmap" resultType="hashmap">
+		SELECT A.RASPBERRY_CONNECTION_NO, A.FUNERAL_NO, A.CLASSIFICATION, A.EXPOSURE, A.APPELLATION
+			, B.STATUS_PLATE_NO, B.SLIDE_SEC, B.SCREEN_TYPE, C.PRIORITY, C.FILE, B.SCREEN_MODE
+		FROM raspberry_connection_tb A LEFT JOIN raspberry_status_plate B ON A.RASPBERRY_CONNECTION_NO = B.RASPBERRY_CONNECTION_NO
+		LEFT JOIN status_plate_files C ON B.STATUS_PLATE_NO = C.STATUS_PLATE_NO
+		WHERE A.CLASSIFICATION = 50 
+		AND A.FLAG = 1
+		<if test="raspberryConnectionNo != null and raspberryConnectionNo != ''">
+			AND A.RASPBERRY_CONNECTION_NO = #{raspberryConnectionNo}
+		</if>
+		<if test="funeralNo != null and funeralNo != ''">
+			AND A.FUNERAL_NO = ${funeralNo}
+		</if>		
+	</select>
+	
+	<select id="selectWaitPreview" parameterType="hashmap" resultType="hashmap">
+		SELECT A.RASPBERRY_CONNECTION_NO, A.FUNERAL_NO, A.CLASSIFICATION, A.EXPOSURE, A.APPELLATION
+			, B.STATUS_PLATE_NO, B.SLIDE_SEC, B.SCREEN_TYPE, C.PRIORITY, C.FILE
+		FROM raspberry_connection_tb A LEFT JOIN raspberry_status_plate B ON A.RASPBERRY_CONNECTION_NO = B.RASPBERRY_CONNECTION_NO
+		LEFT JOIN status_plate_files C ON B.STATUS_PLATE_NO = C.STATUS_PLATE_NO
+		WHERE A.CLASSIFICATION = 90 
+		AND A.FLAG = 1
+		<if test="raspberryConnectionNo != null and raspberryConnectionNo != ''">
+			AND A.RASPBERRY_CONNECTION_NO = #{raspberryConnectionNo}
+		</if>
+		<if test="funeralNo != null and funeralNo != ''">
+			AND A.FUNERAL_NO = ${funeralNo}
+		</if>
+	</select>
+	
+	<select id="selectYJPreview" parameterType="hashmap" resultType="hashmap">
+		SELECT A.RASPBERRY_CONNECTION_NO, B.BINSO_RASPBERRY_CONNECTION_NO, D.*
+		FROM raspberry_connection_tb A LEFT JOIN raspberry_tb B ON A.RASPBERRY_CONNECTION_NO = B.RASPBERRY_CONNECTION_NO
+		LEFT JOIN event_raspberry_connection C ON B.BINSO_RASPBERRY_CONNECTION_NO = C.RASPBERRY_CONNECTION_NO
+		LEFT JOIN event_tb D ON C.EVENT_NO = D.EVENT_NO
+		WHERE A.CLASSIFICATION = 20
+		AND A.RASPBERRY_CONNECTION_NO = #{raspberryConnectionNo}
+		AND D.EVENT_ALIVE_FLAG = 1
+		AND D.CHOOMO_FLAG = 0
+<!-- 		AND C.ORDER_NO = 1 -->
+		AND NOW() <![CDATA[>=]]> ENTRANCE_ROOM_DT
+	</select>
+	
+	<select id="selectIpGwanPreview" parameterType="hashmap" resultType="hashmap">
+		SELECT A.EVENT_NO, A.FUNERAL_NO, A.DM_PHOTO, A.DM_NAME, A.DM_AGE, A.DM_POSITION, A.DM_GENDER, A.BURIAL_PLOT_NAME
+			,DATE_FORMAT(A.CARRYING_DT, '%m월%d일 %H시%i분') AS CARRYING_DT, CARRYING_YN
+			,A.ENTRANCE_ROOM_START_DT ,A.ENTRANCE_ROOM_END_DT
+		FROM event_tb A
+		WHERE ENTRANCE_ROOM_NO = #{raspberryConnectionNo}
+		AND EVENT_ALIVE_FLAG = 1
+		AND CHOOMO_FLAG = 0
+		AND NOW() BETWEEN ENTRANCE_ROOM_START_DT AND ENTRANCE_ROOM_END_DT
+	</select>
+	
+	<!-- 상가화면 조회 쿼리 - selectEventAllList 에서 family 조회, 정산 조회 부분 제거 
+		 상가화면 상주명 컬럼 추가 쿼리 수정 21.09.03
+	-->
+	
+	<select id="selectSanggaList" parameterType="hashmap" resultType="hashmap">
+	<!-- 
+		SELECT C.RASPBERRY_CONNECTION_NO, E.BINSO_RASPBERRY_CONNECTION_NO, CLASSIFICATION, APPELLATION, BUILDING_NAME, FLOOR, EXPOSURE, AREA_SIZE, D.*
+		FROM raspberry_connection_tb C LEFT JOIN (
+			SELECT A.EVENT_NO, A.FUNERAL_NO, 
+				RASPBERRY_CONNECTION_NO AS RPI_NO,
+				B.ORDER_NO, DM_PHOTO, DM_PHOTO_ROTATION, DM_NAME, DM_AGE, DM_REG_NUMBER, DM_RELIGION, 
+				(SELECT KO FROM common_code_tb WHERE TARGET = 'RELIGION' AND VALUE = A.DM_RELIGION) AS DM_RELIGION_NAME,
+				DM_POSITION, DM_GENDER,
+				DM_ADDR, DM_ADDR_DETAIL,
+				CM_NAME, CM_PHONE, CM_COMPANY, CM_POSITION,
+				ENTRANCE_ROOM_NO, (SELECT APPELLATION FROM raspberry_connection_tb WHERE RASPBERRY_CONNECTION_NO = ENTRANCE_ROOM_NO) AS ENTRANCE_ROOM_NO_NAME,
+				DATE_FORMAT(A.ENTRANCE_ROOM_DT, '%Y-%m-%dT%H:%i') AS ENTRANCE_ROOM_DT,
+				DATE_FORMAT(A.ENTRANCE_ROOM_START_DT, '%Y-%m-%dT%H:%i') AS ENTRANCE_ROOM_START_DT, 
+				DATE_FORMAT(A.ENTRANCE_ROOM_END_DT, '%Y-%m-%dT%H:%i') AS ENTRANCE_ROOM_END_DT,
+				CARRYING_YN, DATE_FORMAT(A.CARRYING_DT, '%Y-%m-%dT%H:%i') AS CARRYING_DT, CARRYING_PLACE,
+				DATE_FORMAT(A.DEAD_DT, '%Y-%m-%dT%H:%i') AS DEAD_DT, DEAD_CLASSIFY,
+				DEAD_PLACE, DEAD_CAUSE, FUNERAL_SYSTEM,
+				BURIAL_PLOT_NAME, MEDICAL_CERTIFICATE,
+				DIAGNOSIS_YN, DISCHARGE_YN,
+				DRUG_YN, PUBLIC_PROSECUTOR_YN, A.BIGO,
+				A.CREATE_USER_NO, A.UPDATE_USER_NO,
+				DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d') AS CREATE_DT,
+				DATE_FORMAT(A.UPDATE_DT, '%Y-%m-%d') AS UPDATE_DT,
+                DM_BAP_NAME, CM_BAP_NAME, INSU_YN, CAL_YN, TAKE_OVER, RELIGION_TXT,
+				DATE_FORMAT(A.CEREMONY_DT, '%Y-%m-%dT%H:%i') AS CEREMONY_DT, CEREMONY_YN
+			FROM event_tb A LEFT JOIN event_raspberry_connection B ON A.EVENT_NO = B.EVENT_NO
+	        WHERE EVENT_ALIVE_FLAG = 1 
+	        AND A.CHOOMO_FLAG = 0
+	        <if test="orderNo != null and orderNo != ''">AND B.ORDER_NO = #{orderNo}</if>
+			<if test="statusPlate == 'true'">AND NOW() <![CDATA[>=]]> ENTRANCE_ROOM_DT</if>
+			<if test="statusPlate == 'false'">AND NOW() <![CDATA[<]]> ENTRANCE_ROOM_DT</if>
+			GROUP BY A.EVENT_NO, B.RASPBERRY_CONNECTION_NO
+		) D ON C.RASPBERRY_CONNECTION_NO = D.RPI_NO LEFT JOIN raspberry_tb E ON C.RASPBERRY_CONNECTION_NO = E.BINSO_RASPBERRY_CONNECTION_NO
+		WHERE CLASSIFICATION = 10
+		AND C.FLAG = 1
+		AND C.FUNERAL_NO = ${funeralNo} 
+		<if test="searchText != null and searchText != ''">
+      	  	AND (D.CM_NAME LIKE CONCAT('%', #{searchText},'%') OR D.FAMILY LIKE CONCAT('%', #{searchText},'%')) 
+		</if>
+		<if test="order != null and order != ''">ORDER BY ${order}</if>
+		 -->
+		select * from(
+		SELECT C.RASPBERRY_CONNECTION_NO, E.BINSO_RASPBERRY_CONNECTION_NO, CLASSIFICATION, APPELLATION, BUILDING_NAME, FLOOR, EXPOSURE, AREA_SIZE, D.*
+		FROM raspberry_connection_tb C LEFT JOIN (
+			SELECT A.EVENT_NO, A.FUNERAL_NO, 
+				RASPBERRY_CONNECTION_NO AS RPI_NO,
+				B.ORDER_NO, DM_PHOTO, DM_PHOTO_ROTATION, DM_NAME, DM_AGE, DM_REG_NUMBER, DM_RELIGION, 
+				(SELECT KO FROM common_code_tb WHERE TARGET = 'RELIGION' AND VALUE = A.DM_RELIGION) AS DM_RELIGION_NAME,
+				DM_POSITION, DM_GENDER,
+				DM_ADDR, DM_ADDR_DETAIL,
+				CM_NAME, CM_PHONE, CM_COMPANY, CM_POSITION,
+				ENTRANCE_ROOM_NO, (SELECT APPELLATION FROM raspberry_connection_tb WHERE RASPBERRY_CONNECTION_NO = ENTRANCE_ROOM_NO) AS ENTRANCE_ROOM_NO_NAME,
+				DATE_FORMAT(A.ENTRANCE_ROOM_DT, '%Y-%m-%dT%H:%i') AS ENTRANCE_ROOM_DT,
+				DATE_FORMAT(A.ENTRANCE_ROOM_START_DT, '%Y-%m-%dT%H:%i') AS ENTRANCE_ROOM_START_DT, 
+				DATE_FORMAT(A.ENTRANCE_ROOM_END_DT, '%Y-%m-%dT%H:%i') AS ENTRANCE_ROOM_END_DT,
+				CARRYING_YN, DATE_FORMAT(A.CARRYING_DT, '%Y-%m-%dT%H:%i') AS CARRYING_DT, CARRYING_PLACE,
+				DATE_FORMAT(A.DEAD_DT, '%Y-%m-%dT%H:%i') AS DEAD_DT, DEAD_CLASSIFY,
+				DEAD_PLACE, DEAD_CAUSE, FUNERAL_SYSTEM,
+				BURIAL_PLOT_NAME, MEDICAL_CERTIFICATE,
+				DIAGNOSIS_YN, DISCHARGE_YN,
+				DRUG_YN, PUBLIC_PROSECUTOR_YN, A.BIGO,
+				A.CREATE_USER_NO, A.UPDATE_USER_NO,
+				DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d') AS CREATE_DT,
+				DATE_FORMAT(A.UPDATE_DT, '%Y-%m-%d') AS UPDATE_DT,
+                DM_BAP_NAME, CM_BAP_NAME, INSU_YN, CAL_YN, TAKE_OVER, RELIGION_TXT,
+				DATE_FORMAT(A.CEREMONY_DT, '%Y-%m-%dT%H:%i') AS CEREMONY_DT, CEREMONY_YN
+			FROM event_tb A LEFT JOIN event_raspberry_connection B ON A.EVENT_NO = B.EVENT_NO
+	        WHERE EVENT_ALIVE_FLAG = 1 
+	        AND A.CHOOMO_FLAG = 0
+	        <if test="orderNo != null and orderNo != ''">AND B.ORDER_NO = #{orderNo}</if>
+			<if test="statusPlate == 'true'">AND NOW() <![CDATA[>=]]> ENTRANCE_ROOM_DT</if>
+			<if test="statusPlate == 'false'">AND NOW() <![CDATA[<]]> ENTRANCE_ROOM_DT</if>
+			GROUP BY A.EVENT_NO, B.RASPBERRY_CONNECTION_NO
+		) D ON C.RASPBERRY_CONNECTION_NO = D.RPI_NO LEFT JOIN raspberry_tb E ON C.RASPBERRY_CONNECTION_NO = E.BINSO_RASPBERRY_CONNECTION_NO
+		WHERE CLASSIFICATION = 10
+		AND C.FLAG = 1
+		AND C.FUNERAL_NO = ${funeralNo} 
+		<if test="searchText != null and searchText != ''">
+      	  	AND (D.CM_NAME LIKE CONCAT('%', #{searchText},'%') OR D.FAMILY LIKE CONCAT('%', #{searchText},'%')) 
+		</if>				
+		 )a
+		left outer join 	(
+		select 	EVENT_NO
+		,		REPLACE(REPLACE(GROUP_CONCAT(RELATION, ":", NAMES_BASIC),',','\\'),'/',',') as strSangju	
+		from(		
+				SELECT  EVENT_NO
+				,		RELATION
+				,		GROUP_CONCAT(NAME ORDER BY FAMILY_NO ASC SEPARATOR '/') AS NAMES_BASIC
+				FROM	event_family_tb
+				WHERE	1 = 1	
+				GROUP BY RELATION
+				,		 EVENT_NO	
+				ORDER BY
+				MIN(FAMILY_NO) ASC
+			) a	
+		GROUP BY EVENT_NO
+		) b
+		on a.EVENT_NO = b.EVENT_NO		 		
+		<if test="order != null and order != ''">ORDER BY ${order}</if>		 
+	</select>
+	
+	<select id="selectWaitVideo" parameterType="hashmap" resultType="hashmap">
+		SELECT #{raspberryConnectionNo} AS RASPBERRY_CONNECTION_NO, #{flag} AS FLAG, A.FILE
+		FROM status_plate_files A LEFT JOIN raspberry_status_plate B ON A.STATUS_PLATE_NO = B.STATUS_PLATE_NO
+		LEFT JOIN raspberry_connection_tb C ON B.RASPBERRY_CONNECTION_NO = C.RASPBERRY_CONNECTION_NO
+		WHERE FUNERAL_NO = ${funeralNo}
+		AND CLASSIFICATION = 90;
+	</select>
+	
+	<select id="selectSpecialVideo" parameterType="hashmap" resultType="hashmap">
+		SELECT #{raspberryConnectionNo} AS RASPBERRY_CONNECTION_NO, #{flag} AS FLAG, A.FILE
+		FROM status_plate_files A LEFT JOIN raspberry_status_plate B ON A.STATUS_PLATE_NO = B.STATUS_PLATE_NO
+		LEFT JOIN raspberry_connection_tb C ON B.RASPBERRY_CONNECTION_NO = C.RASPBERRY_CONNECTION_NO
+		WHERE FUNERAL_NO = ${funeralNo}
+		AND C.RASPBERRY_CONNECTION_NO = #{raspberryConnectionNo}
+		AND CLASSIFICATION = 50;
+	</select>
+	
+	<select id="selectPreviewMusic" parameterType="hashmap" resultType="hashmap">
+		SELECT *, #{flag} AS FLAG
+		<if test="yjImg != null and yjImg != ''">, #{yjImg} AS DM_PHOTO</if>
+		FROM raspberry_tb A LEFT JOIN music_tb B ON A.MUSIC_NO = B.MUSIC_NO
+		WHERE RASPBERRY_CONNECTION_NO = #{raspberryConnectionNo}
+	</select>
+	
+	<select id="selectPreviewUpdateMusic" parameterType="hashmap" resultType="hashmap">
+		<choose>
+			<when test="classification == 10">
+				SELECT A.RASPBERRY_CONNECTION_NO, B.MUSIC_PATH, #{flag} AS FLAG
+				<if test="yjImg != null and yjImg != ''">, #{yjImg} AS DM_PHOTO</if>
+				FROM raspberry_tb A LEFT JOIN music_tb B ON A.MUSIC_NO = B.MUSIC_NO
+				LEFT JOIN event_raspberry_connection C ON A.RASPBERRY_CONNECTION_NO = C.RASPBERRY_CONNECTION_NO
+				LEFT JOIN event_tb D ON C.EVENT_NO = D.EVENT_NO
+				LEFT JOIN raspberry_connection_tb E ON A.RASPBERRY_CONNECTION_NO = E.RASPBERRY_CONNECTION_NO
+				WHERE A.RASPBERRY_CONNECTION_NO = #{raspberryConnectionNo}
+				AND NOW() <![CDATA[>=]]> D.ENTRANCE_ROOM_DT
+				AND D.EVENT_ALIVE_FLAG = 1
+				AND D.CHOOMO_FLAG = 0
+				AND E.FLAG = 1
+				GROUP BY MUSIC_PATH
+			</when>
+			<when test="classification == 20">
+				SELECT A.RASPBERRY_CONNECTION_NO, B.MUSIC_PATH, #{flag} AS FLAG
+				<if test="yjImg != null and yjImg != ''">, #{yjImg} AS DM_PHOTO</if>
+				FROM raspberry_tb A LEFT JOIN music_tb B ON A.MUSIC_NO = B.MUSIC_NO
+				LEFT JOIN event_raspberry_connection C ON A.BINSO_RASPBERRY_CONNECTION_NO = C.RASPBERRY_CONNECTION_NO
+				LEFT JOIN event_tb D ON C.EVENT_NO = D.EVENT_NO
+				LEFT JOIN raspberry_connection_tb E ON A.RASPBERRY_CONNECTION_NO = E.RASPBERRY_CONNECTION_NO
+				WHERE A.RASPBERRY_CONNECTION_NO = #{raspberryConnectionNo}
+				AND NOW() <![CDATA[>=]]> D.ENTRANCE_ROOM_DT
+				AND D.EVENT_ALIVE_FLAG = 1
+				AND D.CHOOMO_FLAG = 0
+				AND E.FLAG = 1
+				GROUP BY MUSIC_PATH
+			</when>
+			<otherwise>
+				SELECT A.RASPBERRY_CONNECTION_NO, B.MUSIC_PATH, #{flag} AS FLAG
+				<if test="yjImg != null and yjImg != ''">, #{yjImg} AS DM_PHOTO</if>
+				FROM raspberry_tb A LEFT JOIN music_tb B ON A.MUSIC_NO = B.MUSIC_NO
+				LEFT JOIN event_tb C ON C.ENTRANCE_ROOM_NO = A.RASPBERRY_CONNECTION_NO
+				LEFT JOIN event_raspberry_connection D ON A.BINSO_RASPBERRY_CONNECTION_NO = D.RASPBERRY_CONNECTION_NO
+				LEFT JOIN raspberry_connection_tb E ON A.RASPBERRY_CONNECTION_NO = E.RASPBERRY_CONNECTION_NO
+				WHERE A.RASPBERRY_CONNECTION_NO = #{raspberryConnectionNo}
+				AND NOW() <![CDATA[>=]]> C.ENTRANCE_ROOM_DT
+				AND C.EVENT_ALIVE_FLAG = 1
+				AND C.CHOOMO_FLAG = 0
+				AND E.FLAG = 1
+				GROUP BY MUSIC_PATH
+			</otherwise>
+		</choose>
+	</select>
+	
+	
+	<select id="selectRaspEvent" parameterType="hashmap" resultType="hashmap">
+		SELECT A.RASPBERRY_CONNECTION_NO
+			, (SELECT DM_PHOTO FROM event_tb WHERE EVENT_NO = #{eventNo}) AS DM_PHOTO
+			, A.FLAG
+		FROM(
+			SELECT A.RASPBERRY_CONNECTION_NO
+			<if test="flag != null and flag != ''">, #{flag} AS FLAG</if>
+			FROM event_raspberry_connection A LEFT JOIN raspberry_tb B ON A.RASPBERRY_CONNECTION_NO = B.RASPBERRY_CONNECTION_NO
+			LEFT JOIN event_tb C ON A.EVENT_NO = C.EVENT_NO
+            LEFT JOIN raspberry_connection_tb D ON B.RASPBERRY_CONNECTION_NO = D.RASPBERRY_CONNECTION_NO
+			WHERE A.EVENT_NO = #{eventNo}
+			AND B.DEVICE_CODE = 'pythonConnectionSucc'
+			<if test="eventAliveFlag == 'true'">AND C.EVENT_ALIVE_FLAG = 1</if>
+			AND C.CHOOMO_FLAG = 0
+			AND D.FLAG = 1
+			<if test="eventType == 'insert'">AND NOW() <![CDATA[>=]]> C.ENTRANCE_ROOM_DT</if>
+			<if test="eventType == 'delete'">AND NOW() <![CDATA[>=]]> C.ENTRANCE_ROOM_DT</if>
+			UNION ALL
+			SELECT A.RASPBERRY_CONNECTION_NO
+			<if test="flag != null and flag != ''">, #{flag} AS FLAG</if>
+			FROM raspberry_status_plate A LEFT JOIN status_plate_binso B ON A.STATUS_PLATE_NO = B.STATUS_PLATE_NO
+			LEFT JOIN raspberry_tb C ON A.RASPBERRY_CONNECTION_NO = C.RASPBERRY_CONNECTION_NO 
+    		LEFT JOIN raspberry_connection_tb D ON C.RASPBERRY_CONNECTION_NO = D.RASPBERRY_CONNECTION_NO
+			WHERE B.BINSO_NO IN(SELECT RASPBERRY_CONNECTION_NO
+								FROM event_raspberry_connection A LEFT JOIN event_tb B ON A.EVENT_NO = B.EVENT_NO
+								WHERE A.EVENT_NO = #{eventNo}
+								<if test="eventAliveFlag == 'true'">AND B.EVENT_ALIVE_FLAG = 1</if>
+								AND B.CHOOMO_FLAG = 0
+								<if test="eventType == 'insert'">AND NOW() <![CDATA[>=]]> B.ENTRANCE_ROOM_DT</if>
+								<if test="eventType == 'delete'">AND NOW() <![CDATA[>=]]> B.ENTRANCE_ROOM_DT</if>
+								)
+			AND D.FLAG = 1
+			AND C.DEVICE_CODE = 'pythonConnectionSucc'
+			GROUP BY A.RASPBERRY_CONNECTION_NO
+			UNION ALL
+			SELECT A.RASPBERRY_CONNECTION_NO
+				, IF(#{changeBinso} = "true", #{flag}, "10") AS FLAG
+			FROM raspberry_tb A LEFT JOIN raspberry_connection_tb B ON A.RASPBERRY_CONNECTION_NO = B.RASPBERRY_CONNECTION_NO
+			WHERE A.BINSO_RASPBERRY_CONNECTION_NO IN(SELECT RASPBERRY_CONNECTION_NO
+													FROM event_raspberry_connection A LEFT JOIN event_tb B ON A.EVENT_NO = B.EVENT_NO
+													WHERE A.EVENT_NO = #{eventNo}
+													<if test="eventAliveFlag == 'true'">AND B.EVENT_ALIVE_FLAG = 1</if>
+													AND B.CHOOMO_FLAG = 0
+<!-- 													영정은 행사중에 수정되면 안돼, 예약행사를 수정해도 변경되면 안돼 -->
+													AND NOW() <![CDATA[>=]]> B.ENTRANCE_ROOM_DT
+													)
+			AND B.FLAG = 1
+			AND A.DEVICE_CODE = 'pythonConnectionSucc'
+			UNION ALL
+			SELECT ENTRANCE_ROOM_NO AS RASPBERRY_CONNECTION_NO
+			<if test="flag != null and flag != ''">, #{flag} AS FLAG</if>
+			FROM event_tb A LEFT JOIN raspberry_tb B ON A.ENTRANCE_ROOM_NO = B.RASPBERRY_CONNECTION_NO
+            LEFT JOIN raspberry_connection_tb C ON B.RASPBERRY_CONNECTION_NO = C.RASPBERRY_CONNECTION_NO
+			WHERE EVENT_NO = #{eventNo}
+			AND C.FLAG = 1
+			AND B.DEVICE_CODE = 'pythonConnectionSucc'
+			<if test="eventAliveFlag == 'true'">AND EVENT_ALIVE_FLAG = 1</if>
+			AND CHOOMO_FLAG = 0
+			AND NOW() BETWEEN ENTRANCE_ROOM_START_DT AND ENTRANCE_ROOM_END_DT
+			UNION ALL
+			SELECT A.RASPBERRY_CONNECTION_NO
+			<if test="flag != null and flag != ''">, #{flag} AS FLAG</if>
+			FROM raspberry_tb A LEFT JOIN raspberry_connection_tb B ON A.RASPBERRY_CONNECTION_NO = B.RASPBERRY_CONNECTION_NO
+			WHERE B.CLASSIFICATION = 60
+			AND A.DEVICE_CODE = 'pythonConnectionSucc'
+			AND B.FLAG = 1
+			AND B.FUNERAL_NO = #{funeralNo}
+			<if test="orginRaspList != null and orginRaspList != ''">
+				UNION ALL
+				SELECT A.RASPBERRY_CONNECTION_NO
+				<if test="flag != null and flag != ''">, #{flag} AS FLAG</if>
+				FROM raspberry_tb A LEFT JOIN raspberry_connection_tb B ON A.RASPBERRY_CONNECTION_NO = B.RASPBERRY_CONNECTION_NO
+				WHERE A.RASPBERRY_CONNECTION_NO IN (${orginRaspList})
+				AND B.FLAG = 1
+				AND A.DEVICE_CODE = 'pythonConnectionSucc'
+				UNION ALL
+				SELECT A.RASPBERRY_CONNECTION_NO
+					, IF(#{changeBinso} = "true", #{flag}, "10") AS FLAG
+				FROM raspberry_tb A LEFT JOIN raspberry_connection_tb B ON A.RASPBERRY_CONNECTION_NO = B.RASPBERRY_CONNECTION_NO
+				WHERE B.FLAG = 1
+				AND A.DEVICE_CODE = 'pythonConnectionSucc'
+				AND A.BINSO_RASPBERRY_CONNECTION_NO IN (${orginRaspList})
+			</if>
+			<if test="originEnRoom != null and originEnRoom != ''">
+				UNION ALL
+				SELECT A.RASPBERRY_CONNECTION_NO
+				<if test="flag != null and flag != ''">, #{flag} AS FLAG</if>
+				FROM raspberry_tb A LEFT JOIN raspberry_connection_tb B ON A.RASPBERRY_CONNECTION_NO = B.RASPBERRY_CONNECTION_NO
+				WHERE A.RASPBERRY_CONNECTION_NO = ${originEnRoom}
+				AND A.DEVICE_CODE = 'pythonConnectionSucc'
+				AND B.FLAG = 1
+			</if>
+			)A
+		WHERE A.RASPBERRY_CONNECTION_NO IS NOT NULL
+        GROUP BY A.RASPBERRY_CONNECTION_NO, A.FLAG
+	</select>
+	
+	<select id="selectYjRaspList" parameterType="hashmap" resultType="hashmap">			
+		<choose>
+			<when test="updatePhoto != null and updatePhoto != ''">
+				SELECT A.RASPBERRY_CONNECTION_NO, #{flag} AS FLAG
+				FROM (
+					SELECT A.RASPBERRY_CONNECTION_NO
+					FROM event_raspberry_connection A LEFT JOIN raspberry_tb B ON A.RASPBERRY_CONNECTION_NO = B.RASPBERRY_CONNECTION_NO
+					LEFT JOIN event_tb C ON A.EVENT_NO = C.EVENT_NO
+					WHERE A.EVENT_NO = #{eventNo}
+					AND C.EVENT_ALIVE_FLAG = 1
+					AND C.CHOOMO_FLAG = 0
+					AND B.DEVICE_CODE = 'pythonConnectionSucc'
+					UNION ALL
+					SELECT A.RASPBERRY_CONNECTION_NO
+					FROM raspberry_status_plate A LEFT JOIN status_plate_binso B ON A.STATUS_PLATE_NO = B.STATUS_PLATE_NO
+					LEFT JOIN raspberry_tb C ON A.RASPBERRY_CONNECTION_NO = C.RASPBERRY_CONNECTION_NO 
+					WHERE B.BINSO_NO IN(SELECT RASPBERRY_CONNECTION_NO
+										FROM event_raspberry_connection A LEFT JOIN event_tb B ON A.EVENT_NO = B.EVENT_NO
+										WHERE A.EVENT_NO = #{eventNo}
+										AND B.EVENT_ALIVE_FLAG = 1
+										AND B.CHOOMO_FLAG = 0
+										AND NOW() <![CDATA[>=]]> B.ENTRANCE_ROOM_DT
+										)
+					AND C.DEVICE_CODE = 'pythonConnectionSucc'
+					UNION ALL
+					SELECT ENTRANCE_ROOM_NO AS RASPBERRY_CONNECTION_NO
+					FROM event_tb A LEFT JOIN raspberry_tb B ON A.ENTRANCE_ROOM_NO = B.RASPBERRY_CONNECTION_NO
+					WHERE EVENT_NO = #{eventNo}
+					AND A.EVENT_ALIVE_FLAG = 1
+					AND A.CHOOMO_FLAG = 0
+					AND B.DEVICE_CODE = 'pythonConnectionSucc'
+					AND NOW() BETWEEN ENTRANCE_ROOM_START_DT AND ENTRANCE_ROOM_END_DT
+					) A
+				GROUP BY A.RASPBERRY_CONNECTION_NO
+			</when>
+			<otherwise>
+				SELECT A.RASPBERRY_CONNECTION_NO, B.BINSO_RASPBERRY_CONNECTION_NO, D.*, #{flag} AS FLAG
+				FROM raspberry_connection_tb A LEFT JOIN raspberry_tb B ON A.RASPBERRY_CONNECTION_NO = B.RASPBERRY_CONNECTION_NO
+				LEFT JOIN event_raspberry_connection C ON B.BINSO_RASPBERRY_CONNECTION_NO = C.RASPBERRY_CONNECTION_NO
+				LEFT JOIN event_tb D ON C.EVENT_NO = D.EVENT_NO
+				WHERE D.EVENT_NO = #{eventNo}
+				AND D.EVENT_ALIVE_FLAG = 1
+				AND D.CHOOMO_FLAG = 0
+				AND A.CLASSIFICATION = 20
+				AND B.DEVICE_CODE = 'pythonConnectionSucc'
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="selectRaspMultiPythonInfoExcept" parameterType="hashmap" resultType="hashmap">
+		SELECT A.RASPBERRY_CONNECTION_NO, #{flag} AS FLAG
+		FROM raspberry_status_plate A LEFT JOIN raspberry_connection_tb B ON A.RASPBERRY_CONNECTION_NO = B.RASPBERRY_CONNECTION_NO
+		LEFT JOIN raspberry_tb C ON B.RASPBERRY_CONNECTION_NO = C.RASPBERRY_CONNECTION_NO
+		WHERE MULTI_MODE = 1 
+		AND C.DEVICE_CODE = 'pythonConnectionSucc'
+		AND B.FUNERAL_NO = #{funeralNo}
+		AND MULTI_NAME = (SELECT MULTI_NAME
+						FROM raspberry_status_plate
+						WHERE RASPBERRY_CONNECTION_NO = #{raspberryConnectionNo})
+		AND A.RASPBERRY_CONNECTION_NO <![CDATA[<>]]> #{raspberryConnectionNo}
+	</select>
+	
+	<select id="selectRaspMultiPythonInfo" parameterType="hashmap" resultType="hashmap">
+		SELECT A.RASPBERRY_CONNECTION_NO, #{flag} AS FLAG
+		FROM raspberry_status_plate A LEFT JOIN raspberry_connection_tb B ON A.RASPBERRY_CONNECTION_NO = B.RASPBERRY_CONNECTION_NO
+		LEFT JOIN raspberry_tb C ON B.RASPBERRY_CONNECTION_NO = C.RASPBERRY_CONNECTION_NO
+		WHERE MULTI_MODE = 1 
+		AND C.DEVICE_CODE = 'pythonConnectionSucc'
+		AND B.FUNERAL_NO = #{funeralNo}
+		AND MULTI_NAME = (SELECT MULTI_NAME
+						FROM raspberry_status_plate
+						WHERE RASPBERRY_CONNECTION_NO = #{raspberryConnectionNo})
+	</select>
+	
+	<select id="selectRaspPythonInfo" parameterType="hashmap" resultType="hashmap">
+		SELECT A.RASPBERRY_CONNECTION_NO, #{flag} AS FLAG
+		FROM raspberry_tb A LEFT JOIN raspberry_connection_tb B ON A.RASPBERRY_CONNECTION_NO = B.RASPBERRY_CONNECTION_NO
+		WHERE 1=1 
+		AND A.DEVICE_CODE = 'pythonConnectionSucc'
+		<if test="raspberryConnectionNo != null and raspberryConnectionNo != ''">AND B.RASPBERRY_CONNECTION_NO = #{raspberryConnectionNo}</if>
+		<if test="funeralNo != null and funeralNo != ''">AND A.FUNERAL_NO = #{funeralNo}</if>
+		<if test="selClass != null and selClass != ''">AND B.CLASSIFICATION IN(${selClass})</if>
+	</select>
+	
+	
+	<select id="selectReligionRaspList" parameterType="hashmap" resultType="hashmap">
+		SELECT A.RASPBERRY_CONNECTION_NO, #{flag} AS FLAG
+		FROM event_raspberry_connection A LEFT JOIN raspberry_tb B ON A.RASPBERRY_CONNECTION_NO = B.RASPBERRY_CONNECTION_NO
+		LEFT JOIN event_tb C ON A.EVENT_NO = C.EVENT_NO
+		WHERE NOW() BETWEEN C.ENTRANCE_ROOM_DT AND C.CARRYING_DT
+		AND C.EVENT_ALIVE_FLAG = 1
+		AND C.CHOOMO_FLAG = 0
+		AND C.FUNERAL_NO = #{funeralNo}
+		AND C.DM_RELIGION = #{religionNo}
+		AND B.DEVICE_CODE = 'pythonConnectionSucc'
+	</select>
+	
+	<!-- 염습대장 조회 쿼리 -->
+	<select id="selectShroudNote" parameterType="hashmap" resultType="hashmap">
+	SELECT DATE_FORMAT(carrying_dt, '%Y-%m') as dtMonth
+		 , funeral_no	
+		 , event_no	
+		 , carrying_dt	
+		 , dm_name		
+		 , dm_age		
+		 , dm_gender	
+		 , dm_reg_number 		
+		 , dead_dt		
+		 , dead_cause 	
+		 , dead_place	
+		 , enshrine_dt
+		 , drug_yn		
+		 , funeral_system 	
+		 , shroud_dt	
+		 , shroud_mgr	
+		 , cm_name		
+		 , cm_phone 	
+	  FROM event_tb
+	 WHERE FUNERAL_NO = #{funeralNo}	  
+	 AND CARRYING_DT BETWEEN #{searchStartDt} AND #{searchEndDt}	 
+	 AND EVENT_ALIVE_FLAG = 0		   
+	 ORDER BY CARRYING_DT
+	</select>
+	
+</mapper>

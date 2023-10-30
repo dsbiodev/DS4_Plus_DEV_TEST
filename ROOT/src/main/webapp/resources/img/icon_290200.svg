@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+    <defs>
+        <style>
+            .cls-1,.cls-4{fill:none}.cls-2{fill:#fff}.cls-3{clip-path:url(#clip-path)}.cls-4{font-size:1px;font-family:NotoSansKR-Regular,Noto Sans KR Regular}
+        </style>
+        <clipPath id="clip-path">
+            <path d="M0 0h24v24H0z" class="cls-1"/>
+        </clipPath>
+    </defs>
+    <g id="그룹_14025" data-name="그룹 14025" transform="translate(-.36 -.436)">
+        <path id="ic_card_giftcard_24px" d="M20.155 6.034h-2.2a3.019 3.019 0 0 0-5.365-2.672l-.5.676-.5-.686a3.02 3.02 0 0 0-5.374 2.682h-2.2A2 2 0 0 0 2.01 8.052L2 19.146a2.01 2.01 0 0 0 2.017 2.017h16.138a2.01 2.01 0 0 0 2.017-2.017V8.052a2.01 2.01 0 0 0-2.017-2.018zm-5.043-2.017A1.009 1.009 0 1 1 14.1 5.026a1.012 1.012 0 0 1 1.012-1.009zm-6.052 0a1.009 1.009 0 1 1-1.008 1.009A1.012 1.012 0 0 1 9.06 4.017zm11.095 15.129H4.017v-2.017h16.138zm0-5.043H4.017V8.052h5.124l-2.1 2.854 1.634 1.18 2.4-3.268 1.009-1.372 1.009 1.372 2.4 3.268 1.634-1.18-2.1-2.854h5.124z" class="cls-2" transform="translate(.185 1.229)"/>
+        <g id="_24" class="cls-3" data-name="24" transform="translate(.36 .436)">
+            <path id="사각형_21" d="M0 0h24v24H0z" class="cls-1" data-name="사각형 21"/>
+            <text id="_24-2" class="cls-4" data-name="24" transform="translate(6.118 3)">
+                <tspan x="0" y="0">24</tspan>
+            </text>
+        </g>
+    </g>
+</svg>

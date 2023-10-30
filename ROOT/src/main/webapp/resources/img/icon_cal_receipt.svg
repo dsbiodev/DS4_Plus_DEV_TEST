@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" id="그룹_18336" width="341" height="240" data-name="그룹 18336" viewBox="0 0 341 240">
+    <defs>
+        <style>
+            .cls-1{fill:#539dfe;stroke:#707070}.cls-2{fill:#fdd835}.cls-3{fill:#fbc02d}.cls-4{fill:#57565c}.cls-5{stroke:none}.cls-6{fill:none}
+        </style>
+    </defs>
+    <g id="사각형_39441" class="cls-1" data-name="사각형 39441">
+        <rect width="341" height="240" class="cls-5" rx="2"/>
+        <rect width="340" height="239" x=".5" y=".5" class="cls-6" rx="1.5"/>
+    </g>
+    <g id="그룹_18310" data-name="그룹 18310" transform="translate(-580.565 -715)">
+        <g id="그룹_18309" data-name="그룹 18309" transform="translate(720.565 767)">
+            <g id="bill_2_" data-name="bill (2)">
+                <path id="패스_70409" d="M7.686 60L0 54.872V3.846A3.845 3.845 0 0 1 3.846 0h53.843a3.845 3.845 0 0 1 3.846 3.846v51.026L53.843 60l-5.769-3.848L42.284 60l-5.767-3.844L30.748 60l-5.761-3.846L19.22 60l-5.769-3.846zm0 0" class="cls-2" data-name="패스 70409"/>
+                <path id="패스_70410" d="M53.843 428.074l-5.769-3.848-5.79 3.846-5.767-3.844-5.769 3.846-5.761-3.846-5.767 3.846-5.767-3.846-5.765 3.846L0 422.945v4.04l7.686 5.129 5.765-3.846 5.769 3.846 5.767-3.846 5.761 3.846 5.767-3.846 5.767 3.844 5.792-3.846 5.769 3.848 7.692-5.129v-4.04zm0 0" class="cls-3" data-name="패스 70410" transform="translate(0 -372.114)"/>
+                <g id="그룹_18254" data-name="그룹 18254" transform="translate(7.692 11.538)">
+                    <path id="패스_70411" d="M64 96h30.767v3.846H64zm0 0" class="cls-4" data-name="패스 70411" transform="translate(-64 -96)"/>
+                    <path id="패스_70413" d="M352 96h11.538v3.846H352zm0 0" class="cls-4" data-name="패스 70413" transform="translate(-317.387 -96)"/>
+                    <path id="패스_70414" d="M64 160h30.767v3.846H64zm0 0" class="cls-4" data-name="패스 70414" transform="translate(-64 -152.308)"/>
+                    <path id="패스_70415" d="M352 160h11.538v3.846H352zm0 0" class="cls-4" data-name="패스 70415" transform="translate(-317.387 -152.308)"/>
+                    <path id="패스_70416" d="M352 224h11.538v3.846H352zm0 0" class="cls-4" data-name="패스 70416" transform="translate(-317.387 -208.616)"/>
+                    <path id="패스_70417" d="M64 224h30.767v3.846H64zm0 0" class="cls-4" data-name="패스 70417" transform="translate(-64 -208.616)"/>
+                    <path id="패스_70418" d="M64 288h30.767v3.846H64zm0 0" class="cls-4" data-name="패스 70418" transform="translate(-64 -264.924)"/>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

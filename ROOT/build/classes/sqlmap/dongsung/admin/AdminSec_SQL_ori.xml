@@ -1,0 +1,2224 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.pbfw.admin_sec.mapper.AdminSecMapper">
+
+	<!-- 통계 - 빈소통계 쿼리
+		 페이징 쿼리 Display부분 없어 주석처리(21.06.24)
+		 빈소 라디오박스 flag에 따라 쿼리 실행(21.06.30)
+	-->
+	<select id="selectStatisticsBinsoList" parameterType="hashmap" resultType="hashmap">
+	<include refid="selectBinsoCountSql"/>
+		<!--  
+		<choose>		
+			<when test = "searchTyp.equals('sum')">
+				<include refid="selectBinsoCountSql"/>			
+			</when>
+			
+			<otherwise>
+				<include refid="selectBinsoCountSql"/>		
+			</otherwise>		
+		</choose>
+				-->							
+		<!--<if test="order != null and order != ''">ORDER BY ${order}</if>-->
+		<!--  <if test="queryPage != null and queryPage != ''">LIMIT ${queryPage}, ${display}</if>-->		
+	</select>
+	
+	<!-- statistics_cal_tb:E -->
+	
+	<!-- 빈소통계 TEST 쿼리 add 21.06.18
+		 빈소통계 전체 빈소 표기되도록 쿼리 수정 21.06.23 		 
+		 order by 주석처리(빈소명 순서 순차적으로 안나옴) 21.07.08
+	-->
+	<sql id="selectBinsoCountSql">
+		
+	<!-- 2021.06.23 월별 통계 쿼리(전체 빈소 표기)-->
+	select  a.APPELLATION 
+	,		IFNULL(b.RASPBERRY_CONNECTION_NO,0) as RASPBERRY_CONNECTION_NO
+	,		IFNULL(b.CNT,0) as CNT
+	,		b.DATE 
+	,		IFNULL(b.TOTAL_VAL,0) as TOTAL_VAL
+	,		IFNULL(b.SANGJO_CNT,0) as SANGJO_CNT
+	from raspberry_connection_tb a
+	left outer join(	
+					SELECT 	a.APPELLATION as APPELLATION				
+					,		a.RASPBERRY_CONNECTION_NO as RASPBERRY_CONNECTION_NO	
+					,		a.CNT as CNT						
+					,		a.DATE as DATE						
+					, 		b.TOTAL_VAL as TOTAL_VAL			
+					,		c.SANGJO_CNT as SANGJO_CNT  					
+					FROM(	select  APPELLATION
+							,   	A.RASPBERRY_CONNECTION_NO
+							,   	COUNT(A.RASPBERRY_CONNECTION_NO) AS CNT
+							, 		DATE_FORMAT(CARRYING_DT, '%Y-%m') AS DATE
+							from raspberry_connection_tb A 
+							left join event_raspberry_connection B 
+							   on A.RASPBERRY_CONNECTION_NO = B.RASPBERRY_CONNECTION_NO
+							  and B.ORDER_NO =1
+							left join event_tb C
+							   on B.EVENT_NO = C.EVENT_NO
+							where A.FUNERAL_NO =  ${funeralNo}
+							  and A.CLASSIFICATION = 10
+							  and C.CHOOMO_FLAG = 0
+							  and DATE_FORMAT(CARRYING_DT, '%Y-%m') between #{calFrom} AND #{calTo}
+							group by A.RASPBERRY_CONNECTION_NO,DATE_FORMAT(CARRYING_DT, '%Y-%m')
+							 )a
+						 	LEFT OUTER JOIN 	
+						 	(select DATE_FORMAT(CARRYING_DT, '%Y-%m') AS DATE
+						  	 , 		count(*) AS TOTAL_VAL
+						  	 from event_tb
+						  	 where FUNERAL_NO =  ${funeralNo}
+						  	 and CHOOMO_FLAG = 0
+						  	 and DATE_FORMAT(CARRYING_DT, '%Y-%m') between #{calFrom} AND #{calTo}
+						  	 group by DATE_FORMAT(CARRYING_DT, '%Y-%m') 
+						  	)b
+							ON a.DATE = b.DATE
+							LEFT OUTER JOIN 
+							(select DATE_FORMAT(CARRYING_DT, '%Y-%m') AS DATE 
+							 , 		count(*) AS SANGJO_CNT
+							 from	event_tb
+							 where 	FUNERAL_NO =  ${funeralNo}
+							 and 	DATE_FORMAT(CARRYING_DT, '%Y-%m') between #{calFrom} AND #{calTo} 
+							 and 	CARRYING_PLACE != ''
+							 group by DATE_FORMAT(CARRYING_DT, '%Y-%m')
+							)c
+							ON a.DATE = c.DATE	
+						)b
+	on a.APPELLATION  = b.APPELLATION
+	where a.FUNERAL_NO = ${funeralNo}
+	and a.CLASSIFICATION = 10			
+	</sql>	
+	
+	<sql id="selectBinsoPercentSql">
+	<!-- 2021.06.30 월별 빈소 사용률 조회 쿼리 작성
+select	APPELLATION
+,		RASPBERRY_CONNECTION_NO 
+,		CONCAT(IFNULL(round((CNT / TOTAL_VAL * 100), 0), 0), '%') AS CNT 
+,		DATE 
+,		'100%' AS TOTAL_VAL 	
+  from(
+		select	a.APPELLATION 
+		,		IFNULL(b.RASPBERRY_CONNECTION_NO, 0) as RASPBERRY_CONNECTION_NO 
+		,		IFNULL(b.CNT, 0) as CNT 
+		,		b.DATE 
+		,		IFNULL(b.TOTAL_VAL, 0) as TOTAL_VAL 		
+		  from 	raspberry_connection_tb a
+		left outer join(
+						select	a.APPELLATION as APPELLATION 
+						,  	   	a.RASPBERRY_CONNECTION_NO as RASPBERRY_CONNECTION_NO 
+						,		a.CNT as CNT 
+						,		a.DATE as DATE 
+						,		b.TOTAL_VAL as TOTAL_VAL			
+						from(
+						 	 select	APPELLATION 
+						 	 ,		A.RASPBERRY_CONNECTION_NO 
+						 	 ,		COUNT(A.RASPBERRY_CONNECTION_NO) AS CNT 
+						 	 ,		DATE_FORMAT(CARRYING_DT, '%Y-%m') AS DATE
+						 	 from	raspberry_connection_tb A
+							 left join event_raspberry_connection B 
+							 on A.RASPBERRY_CONNECTION_NO = B.RASPBERRY_CONNECTION_NO
+							 and B.ORDER_NO = 1
+							 left join event_tb C 
+							 on	B.EVENT_NO = C.EVENT_NO
+							 where 	A.FUNERAL_NO = ${funeralNo}
+							 and A.CLASSIFICATION = 10
+							 and C.CHOOMO_FLAG = 0
+							 and DATE_FORMAT(CARRYING_DT, '%Y-%m') between #{calFrom} AND #{calTo} 
+							 group by
+							 A.RASPBERRY_CONNECTION_NO,
+							 DATE_FORMAT(CARRYING_DT, '%Y-%m') )a
+		LEFT OUTER JOIN (
+						 select	DATE_FORMAT(CARRYING_DT, '%Y-%m') AS DATE 
+						 ,		count(*) AS TOTAL_VAL
+						 from  	event_tb
+						 where	FUNERAL_NO = ${funeralNo}
+						 and CHOOMO_FLAG = 0
+						 and DATE_FORMAT(CARRYING_DT, '%Y-%m') between #{calFrom} AND #{calTo} 
+						 group by
+						 DATE_FORMAT(CARRYING_DT, '%Y-%m') )b ON
+						 a.DATE = b.DATE)b 
+		on	a.APPELLATION = b.APPELLATION
+	where a.FUNERAL_NO = ${funeralNo}
+	and 	a.CLASSIFICATION = 10 ) c	
+	-->		
+	</sql>		
+	
+	<!-- admin_stock_tb:S -->
+	<select id="selectStockTotalStatusList" parameterType="hashmap" resultType="hashmap">
+		SELECT A.ITEM_NO, A.NAME AS ITEM_NAME, A.CLASSIFICATION_NO, B.NAME AS CLASSIFICATION_NAME
+			, SUM(A.NEW_IN_CNT) AS NEW_IN_CNT
+			, SUM(A.OLD_IN_CNT) AS OLD_IN_CNT
+			, SUM((A.NEW_IN_CNT + A.OLD_IN_CNT)) AS IN_CNT
+			, SUM(A.NEW_OUT_CNT) AS NEW_OUT_CNT
+			, SUM(A.OLD_OUT_CNT) AS OLD_OUT_CNT
+			, SUM((A.NEW_OUT_CNT + A.OLD_OUT_CNT)) AS OUT_CNT
+			, SUM((A.NEW_IN_CNT - A.NEW_OUT_CNT)) AS NEW_STOCK_CNT
+			, SUM((A.OLD_IN_CNT - A.OLD_OUT_CNT)) AS OLD_STOCK_CNT
+			, SUM(A.NEW_DES_CNT) AS NEW_DES_CNT
+			, SUM(A.OLD_DES_CNT) AS OLD_DES_CNT
+			, SUM((A.NEW_IN_CNT + A.OLD_IN_CNT - A.NEW_OUT_CNT - A.OLD_OUT_CNT - A.NEW_DES_CNT - A.OLD_DES_CNT)) AS STOCK_TOTAL_CNT
+			, SUM(A.USER_IN_CNT) AS USER_IN_CNT
+			, SUM(A.USER_OUT_CNT) AS USER_OUT_CNT
+			, SUM(A.USER_IN_CNT - A.USER_OUT_CNT) AS USER_TOTAL_CNT
+			, SUM((A.NEW_IN_CNT + A.OLD_IN_CNT - A.NEW_OUT_CNT - A.OLD_OUT_CNT - A.NEW_DES_CNT - A.OLD_DES_CNT) + (A.USER_IN_CNT - A.USER_OUT_CNT)) AS TOTAL_CNT
+		FROM(  
+			SELECT A.ITEM_NO, A.NAME, A.CLASSIFICATION_NO, B.STOCK_ITEM_FLAG, C.STOCK_FLAG
+				, CASE WHEN B.STOCK_ITEM_FLAG = 1 AND C.STOCK_FLAG = 1 THEN SUM(B.CNT) ELSE 0 END AS NEW_IN_CNT
+				, CASE WHEN B.STOCK_ITEM_FLAG = 2 AND C.STOCK_FLAG = 1 THEN SUM(B.CNT) ELSE 0 END AS OLD_IN_CNT
+				, CASE WHEN B.STOCK_ITEM_FLAG = 1 AND C.STOCK_FLAG = 2 THEN SUM(B.CNT) ELSE 0 END AS NEW_OUT_CNT
+				, CASE WHEN B.STOCK_ITEM_FLAG = 2 AND C.STOCK_FLAG = 2 THEN SUM(B.CNT) ELSE 0 END AS OLD_OUT_CNT
+				, CASE WHEN B.STOCK_ITEM_FLAG = 1 AND C.STOCK_FLAG = 3 THEN SUM(B.CNT) ELSE 0 END AS NEW_DES_CNT
+				, CASE WHEN B.STOCK_ITEM_FLAG = 2 AND C.STOCK_FLAG = 3 THEN SUM(B.CNT) ELSE 0 END AS OLD_DES_CNT
+				, 0 AS USER_IN_CNT
+				, 0 AS USER_OUT_CNT
+			FROM admin_stock_item_tb A LEFT JOIN admin_stock_status_tb B ON A.ITEM_NO = B.STOCK_ITEM_NO
+			LEFT JOIN admin_stock_tb C ON B.STOCK_NO = C.STOCK_NO
+			WHERE A.FLAG = 1
+			GROUP BY A.ITEM_NO, B.STOCK_ITEM_FLAG, C.STOCK_FLAG
+			UNION ALL
+			SELECT A.ITEM_NO, A.NAME, A.CLASSIFICATION_NO, B.STOCK_ITEM_FLAG, C.STOCK_FLAG
+				, 0 AS NEW_IN_CNT
+			    , 0 AS OLD_IN_CNT
+			    , 0 AS NEW_OUT_CNT
+			    , 0 AS OLD_OUT_CNT
+			    , 0 AS NEW_DES_CNT
+			    , 0 AS OLD_DES_CNT
+				, CASE WHEN C.STOCK_FLAG = 1 THEN SUM(B.CNT) ELSE 0 END AS USER_IN_CNT
+				, CASE WHEN C.STOCK_FLAG = 2 THEN SUM(B.CNT) ELSE 0 END AS USER_OUT_CNT
+			FROM admin_stock_item_tb A LEFT JOIN admin_user_stock_status_tb B ON A.ITEM_NO = B.STOCK_ITEM_NO
+			LEFT JOIN admin_user_stock_tb C ON B.STOCK_NO = C.STOCK_NO
+			WHERE A.FLAG = 1
+			GROUP BY A.ITEM_NO, B.STOCK_ITEM_FLAG, C.STOCK_FLAG
+		) A LEFT JOIN admin_stock_classification_tb B ON A.CLASSIFICATION_NO = B.CLASSIFICATION_NO
+		GROUP BY A.ITEM_NO, A.NAME, A.CLASSIFICATION_NO, B.NAME
+		ORDER BY B.CLASSIFICATION_NO, A.NAME
+	</select>
+	
+	
+	
+	<select id="selectFuneralList" parameterType="hashmap" resultType="hashmap">
+		SELECT FUNERAL_NO, FUNERAL_NAME, BUS_NO, BOSS_NAME, ADDRESS, ADDRESS_DETAIL, SIDO, GUNGU, CONTACT
+			, (SELECT NAME FROM city_code_tb WHERE CODE = SIDO) AS SIDO_NAME
+			, (SELECT NAME FROM city_code_tb WHERE CODE = GUNGU) AS GUNGU_NAME
+			, PARKING_CNT, RESTAURANT, STORE, WAITING_ROOM, DISABLED_PERSON_FACILITY, OPERATION_TYPE, OPERATION_KIND
+			, FUNERAL_CNT,ENSHRINE_CNT, FUNERAL_IMG, LOGO_IMG, LAT, LNG, LOCATION
+			, CALCULATE_NAME, CALCULATE_CONTACT, CALCULATE_EMAIL, CALCULATE_FLAG, WREATH, MANAGER_NO, PHOTO_MANAGER_NO, CALLMIX
+			, FUNERAL_FLAG
+		FROM funeral_info_tb
+	</select>
+	
+	<select id="selectStockUserList" parameterType="hashmap" resultType="hashmap">
+		SELECT *
+		FROM user_tb
+		WHERE ALIVE_FLAG = 1 
+		AND LV IN(90, 91)
+	</select>
+	
+	<sql id="selectStocksql">
+		SELECT A.*
+		FROM(
+			SELECT A.STOCK_NO, DATE_FORMAT(STOCK_DT, '%Y-%m-%d') AS STOCK_DT
+				, CASE WHEN SUBSTRING(A.COMPANY, 1, 1) = 'F' THEN (SELECT FUNERAL_NAME FROM funeral_info_tb WHERE FUNERAL_NO = SUBSTR(A.COMPANY, 2))
+				WHEN SUBSTRING(A.COMPANY, 1, 1) = 'U' THEN (SELECT NAME FROM user_tb WHERE USER_NO = SUBSTR(A.COMPANY, 2))
+				ELSE '기타' END AS COMPANY
+				, IF(SUBSTRING(A.COMPANY, 1, 1) = 'F', (SELECT NAME FROM city_code_tb WHERE CODE = 
+											(SELECT SIDO FROM funeral_info_tb WHERE FUNERAL_NO = SUBSTR(A.COMPANY, 2))), '-') AS SIDO
+				, A.MANAGER
+				, (SELECT NAME FROM user_tb WHERE USER_NO = A.MANAGER) AS MANAGER_NAME
+				, A.STOCK_FLAG
+				, (SELECT KO FROM common_code_tb WHERE TARGET = 'STOCK' AND VALUE = A.STOCK_FLAG) AS STOCK_FLAG_NAME
+				, A.STOCK_DETAIL_FLAG
+				, (SELECT KO FROM common_code_tb WHERE TARGET = 'STOCK_DETAIL' AND VALUE = A.STOCK_DETAIL_FLAG) AS STOCK_DETAIL_FLAG_NAME
+				, GROUP_CONCAT(' [', (SELECT NAME FROM admin_stock_item_tb WHERE ITEM_NO = B.STOCK_ITEM_NO ORDER BY ITEM_NO),' ', IF(B.STOCK_ITEM_FLAG=1,'신품','중고'), '] * ',CNT, ' ') AS LIST
+				, A.REMARKS
+			FROM admin_stock_tb A LEFT JOIN admin_stock_status_tb B ON A.STOCK_NO = B.STOCK_NO
+			GROUP BY A.STOCK_NO, B.STOCK_NO
+		) A
+		WHERE 1=1
+        AND DATE_FORMAT(A.STOCK_DT, '%Y%m%d') BETWEEN #{calFrom} AND #{calTo}
+        <if test="stockFlag != null and stockFlag != ''">
+			AND A.STOCK_FLAG = #{stockFlag}
+		</if>
+		<if test="searchText != null and searchText != ''">
+			AND (A.COMPANY LIKE CONCAT('%', #{searchText},'%')
+			OR A.MANAGER_NAME LIKE CONCAT('%', #{searchText},'%')
+			OR A.LIST LIKE CONCAT('%', #{searchText},'%'))
+		</if>
+	</sql>
+	
+	<select id="selectStockTotalCount" parameterType="hashmap" resultType="string">
+		SELECT COUNT(*) AS total FROM (<include refid="selectStocksql"/>) A
+	</select>
+	
+	<select id="selectStockList" parameterType="hashmap" resultType="hashmap">
+		<include refid="selectStocksql"/>
+		<if test="order != null and order != ''">ORDER BY ${order}</if>
+		<if test="queryPage != null and queryPage != ''">LIMIT ${queryPage}, ${display}</if>
+	</select>
+	
+	<select id="selectStockStatusList" parameterType="hashmap" resultType="hashmap">
+		SELECT A.STATUS_NO, A.STOCK_NO, A.STOCK_ITEM_NO, A.STOCK_ITEM_FLAG, A.CNT 
+		FROM admin_stock_status_tb A
+		WHERE STOCK_NO = #{stockNo}
+	</select>
+	
+	<insert id="insertStock" parameterType="hashmap" useGeneratedKeys="true" keyProperty="STOCK_NO">
+		INSERT INTO admin_stock_tb(STOCK_DT, COMPANY, MANAGER, STOCK_FLAG, STOCK_DETAIL_FLAG, REMARKS, CREATE_USER_NO)
+		VALUES(#{stockDt}, #{company}, #{manager}, #{stockFlag}, #{stockDetailFlag}, #{remarks}, #{createUserNo})
+	</insert>
+	
+	<insert id="insertStockStatus" parameterType="hashmap">
+		INSERT INTO admin_stock_status_tb(STOCK_NO, STOCK_ITEM_NO, STOCK_ITEM_FLAG, CNT)
+		VALUES
+			<foreach collection="list" item="item" index="index" separator=",">
+				(#{STOCK_NO}, #{item.stockItemNo}, #{item.stockItemFlag}, #{item.cnt})
+			</foreach>
+	</insert>
+	
+	<update id="updateStock" parameterType="hashmap">
+		UPDATE admin_stock_tb 
+		SET STOCK_DT = #{stockDt}
+		, COMPANY = #{company}
+		, MANAGER = #{manager}
+		, STOCK_FLAG = #{stockFlag}
+		, STOCK_DETAIL_FLAG = #{stockDetailFlag}
+		, REMARKS = #{remarks}
+		, UPDATE_USER_NO = #{updateUserNo}
+		, UPDATE_DT = NOW()
+		WHERE STOCK_NO = #{stockNo}
+	</update>
+
+	<delete id="deleteStockStatus" parameterType="hashmap">
+		DELETE FROM admin_stock_status_tb
+		WHERE STOCK_NO = #{stockNo}
+	</delete>
+	
+	<delete id="deleteStock" parameterType="hashmap">
+		DELETE FROM admin_stock_tb
+		WHERE STOCK_NO = #{stockNo}
+	</delete>
+	<!-- admin_stock_tb:E -->
+	
+		
+	<!-- admin_user_stock_tb:S -->
+	<select id="selectUserStockTotalStatusList" parameterType="hashmap" resultType="hashmap">
+		SELECT A.ITEM_NO, A.NAME AS ITEM_NAME, A.CLASSIFICATION_NO, B.NAME AS CLASSIFICATION_NAME
+			, SUM(A.NEW_IN_CNT) AS NEW_IN_CNT
+			, SUM(A.OLD_IN_CNT) AS OLD_IN_CNT
+			, SUM((A.NEW_IN_CNT + A.OLD_IN_CNT)) AS IN_CNT
+			, SUM(A.NEW_OUT_CNT) AS NEW_OUT_CNT
+			, SUM(A.OLD_OUT_CNT) AS OLD_OUT_CNT
+			, SUM((A.NEW_OUT_CNT + A.OLD_OUT_CNT)) AS OUT_CNT
+			, SUM((A.NEW_IN_CNT - A.NEW_OUT_CNT)) AS NEW_STOCK_CNT
+			, SUM((A.OLD_IN_CNT - A.OLD_OUT_CNT)) AS OLD_STOCK_CNT
+			, SUM((A.NEW_IN_CNT + A.OLD_IN_CNT - A.NEW_OUT_CNT - A.OLD_OUT_CNT)) AS TOTAL_CNT
+		FROM(  
+			SELECT A.ITEM_NO, A.NAME, A.CLASSIFICATION_NO, B.STOCK_ITEM_FLAG, C.STOCK_FLAG
+				, CASE WHEN B.STOCK_ITEM_FLAG = 1 AND C.STOCK_FLAG = 1 THEN SUM(B.CNT) ELSE 0 END AS NEW_IN_CNT
+				, CASE WHEN B.STOCK_ITEM_FLAG = 2 AND C.STOCK_FLAG = 1 THEN SUM(B.CNT) ELSE 0 END AS OLD_IN_CNT
+				, CASE WHEN B.STOCK_ITEM_FLAG = 1 AND C.STOCK_FLAG = 2 THEN SUM(B.CNT) ELSE 0 END AS NEW_OUT_CNT
+				, CASE WHEN B.STOCK_ITEM_FLAG = 2 AND C.STOCK_FLAG = 2 THEN SUM(B.CNT) ELSE 0 END AS OLD_OUT_CNT
+			FROM admin_stock_item_tb A LEFT JOIN admin_user_stock_status_tb B ON A.ITEM_NO = B.STOCK_ITEM_NO
+			LEFT JOIN admin_user_stock_tb C ON B.STOCK_NO = C.STOCK_NO 
+			<if test="manager != null and manager != ''">
+				AND C.MANAGER = #{manager}
+			</if>
+			WHERE A.FLAG = 1
+			GROUP BY A.ITEM_NO, B.STOCK_ITEM_FLAG, C.STOCK_FLAG
+		) A LEFT JOIN admin_stock_classification_tb B ON A.CLASSIFICATION_NO = B.CLASSIFICATION_NO
+		GROUP BY A.ITEM_NO
+		ORDER BY B.CLASSIFICATION_NO, A.NAME
+	</select>
+	
+	<sql id="selectUserStocksql">
+		SELECT A.*
+		FROM(
+			SELECT A.STOCK_NO, DATE_FORMAT(STOCK_DT, '%Y-%m-%d') AS STOCK_DT
+				, A.MANAGER
+				, (SELECT NAME FROM user_tb WHERE USER_NO = A.MANAGER) AS MANAGER_NAME
+				, A.STOCK_FLAG
+				, (SELECT KO FROM common_code_tb WHERE TARGET = 'STOCK' AND VALUE = A.STOCK_FLAG) AS STOCK_FLAG_NAME
+				, GROUP_CONCAT(' [', (SELECT NAME FROM admin_stock_item_tb WHERE ITEM_NO = B.STOCK_ITEM_NO ORDER BY ITEM_NO),' ', IF(B.STOCK_ITEM_FLAG=1,'신품','중고'), '] * ',CNT) AS LIST
+				, A.REMARKS
+			FROM admin_user_stock_tb A LEFT JOIN admin_user_stock_status_tb B ON A.STOCK_NO = B.STOCK_NO
+			GROUP BY A.STOCK_NO, B.STOCK_NO
+		) A
+		WHERE 1=1
+        AND DATE_FORMAT(A.STOCK_DT, '%Y%m%d') BETWEEN #{calFrom} AND #{calTo}
+        <if test="stockFlag != null and stockFlag != ''">
+			AND A.STOCK_FLAG = #{stockFlag}
+		</if>
+		<if test="searchText != null and searchText != ''">
+			AND (A.MANAGER_NAME LIKE CONCAT('%', #{searchText},'%')
+			OR A.LIST LIKE CONCAT('%', #{searchText},'%'))
+		</if>
+	</sql>
+	
+	<select id="selectUserStockTotalCount" parameterType="hashmap" resultType="string">
+		SELECT COUNT(*) AS total FROM (<include refid="selectUserStocksql"/>) A
+	</select>
+	
+	<select id="selectUserStockList" parameterType="hashmap" resultType="hashmap">
+		<include refid="selectUserStocksql"/>
+		<if test="order != null and order != ''">ORDER BY ${order}</if>
+		<if test="queryPage != null and queryPage != ''">LIMIT ${queryPage}, ${display}</if>
+	</select>
+	
+	<select id="selectUserStockStatusList" parameterType="hashmap" resultType="hashmap">
+		SELECT A.STATUS_NO, A.STOCK_NO, A.STOCK_ITEM_NO, A.STOCK_ITEM_FLAG, A.CNT 
+		FROM admin_user_stock_status_tb A
+		WHERE STOCK_NO = #{stockNo}
+	</select>
+	
+	
+	<insert id="insertUserStock" parameterType="hashmap" useGeneratedKeys="true" keyProperty="STOCK_NO">
+		INSERT INTO admin_user_stock_tb(STOCK_DT, MANAGER, STOCK_FLAG, REMARKS, CREATE_USER_NO)
+		VALUES(#{stockDt}, #{manager}, #{stockFlag}, #{remarks}, #{createUserNo})
+	</insert>
+	
+	<insert id="insertUserStockStatus" parameterType="hashmap">
+		INSERT INTO admin_user_stock_status_tb(STOCK_NO, STOCK_ITEM_NO, STOCK_ITEM_FLAG, CNT)
+		VALUES
+			<foreach collection="list" item="item" index="index" separator=",">
+				(#{STOCK_NO}, #{item.stockItemNo}, #{item.stockItemFlag}, #{item.cnt})
+			</foreach>
+	</insert>
+	
+	<update id="updateUserStock" parameterType="hashmap">
+		UPDATE admin_user_stock_tb 
+		SET STOCK_DT = #{stockDt}
+		, MANAGER = #{manager}
+		, STOCK_FLAG = #{stockFlag}
+		, REMARKS = #{remarks}
+		, UPDATE_USER_NO = #{updateUserNo}
+		, UPDATE_DT = NOW()
+		WHERE STOCK_NO = #{stockNo}
+	</update>
+
+	<delete id="deleteUserStockStatus" parameterType="hashmap">
+		DELETE FROM admin_user_stock_status_tb
+		WHERE STOCK_NO = #{stockNo}
+	</delete>
+	
+	<delete id="deleteUserStock" parameterType="hashmap">
+		DELETE FROM admin_user_stock_tb
+		WHERE STOCK_NO = #{stockNo}
+	</delete>
+	<!-- admin_user_stock_tb:E -->
+	
+	
+	
+	<!-- admin_stock_item_tb:S -->
+	<sql id="selectStockItemsql">
+		SELECT A.ITEM_NO, A.CODE, A.NAME AS ITEM_NAME, A.CLASSIFICATION_NO, B.NAME AS CLASSIFICATION_NAME
+			, A.CREATE_USER_NO, A.UPDATE_USER_NO
+			, DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d') AS CREATE_DT
+			, DATE_FORMAT(A.UPDATE_DT, '%Y-%m-%d') AS UPDATE_DT
+    		, (SELECT COUNT(STOCK_ITEM_NO) FROM admin_stock_status_tb WHERE STOCK_ITEM_NO = A.ITEM_NO) AS STOCK_CNT
+		FROM admin_stock_item_tb A LEFT JOIN admin_stock_classification_tb B ON A.CLASSIFICATION_NO = B.CLASSIFICATION_NO
+		WHERE A.FLAG = 1
+		<if test="searchText != null and searchText != ''">
+			AND A.NAME LIKE CONCAT('%', #{searchText},'%')
+		</if>
+	</sql>
+	
+	<select id="selectStockItemTotalCount" parameterType="hashmap" resultType="string">
+		SELECT COUNT(*) AS total FROM (<include refid="selectStockItemsql"/>) A
+	</select>
+	
+	<select id="selectStockItemList" parameterType="hashmap" resultType="hashmap">
+		<include refid="selectStockItemsql"/>
+		<if test="order != null and order != ''">ORDER BY ${order}</if>
+		<if test="queryPage != null and queryPage != ''">LIMIT ${queryPage}, ${display}</if>
+	</select>
+	
+	<insert id="insertStockItem" parameterType="hashmap" useGeneratedKeys="true" keyProperty="ITEM_NO">
+		INSERT INTO admin_stock_item_tb(NAME, CODE, CLASSIFICATION_NO, CREATE_USER_NO)
+		VALUES(#{itemName}, #{code}, #{classification}, #{createUserNo})
+	</insert>
+	
+	<update id="updateStockItem" parameterType="hashmap">
+		UPDATE admin_stock_item_tb
+		SET NAME = #{itemName}
+		, CODE = #{code}
+		, CLASSIFICATION_NO = #{classification}
+		, UPDATE_USER_NO = #{updateUserNo}
+		, UPDATE_DT = NOW()
+		WHERE ITEM_NO = #{itemNo}
+	</update>
+	
+	<delete id="deleteStockItem" parameterType="hashmap">
+		UPDATE admin_stock_item_tb
+		SET FLAG = 2
+		, UPDATE_USER_NO = #{updateUserNo}
+		, UPDATE_DT = now()
+		WHERE ITEM_NO = #{itemNo}
+	</delete>
+	
+	<select id="dupStockItemCode" parameterType="hashmap" resultType="int">
+		SELECT COUNT(CODE)
+		FROM admin_stock_item_tb
+		WHERE CODE = #{dupCode}
+	</select>
+	<!-- admin_stock_item_tb:E -->
+	
+	
+	
+	
+	<!-- admin_stock_classification_tb:S -->
+	<sql id="selectStockClassificationsql">
+		SELECT A.CLASSIFICATION_NO, A.NAME
+			, A.CREATE_USER_NO, A.UPDATE_USER_NO
+			, DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d') AS CREATE_DT
+			, DATE_FORMAT(A.UPDATE_DT, '%Y-%m-%d') AS UPDATE_DT
+			, COUNT(B.ITEM_NO) AS ITEM_CNT
+		FROM admin_stock_classification_tb A LEFT JOIN admin_stock_item_tb B ON A.CLASSIFICATION_NO = B.CLASSIFICATION_NO
+		WHERE A.FLAG = 1
+		GROUP BY A.CLASSIFICATION_NO
+	</sql>
+	
+	<select id="selectStockClassificationTotalCount" parameterType="hashmap" resultType="string">
+		SELECT COUNT(*) AS total FROM (<include refid="selectStockClassificationsql"/>) A
+	</select>
+	
+	<select id="selectStockClassificationList" parameterType="hashmap" resultType="hashmap">
+		<include refid="selectStockClassificationsql"/>
+		<if test="order != null and order != ''">ORDER BY ${order}</if>
+		<if test="queryPage != null and queryPage != ''">LIMIT ${queryPage}, ${display}</if>
+	</select>
+	
+	<insert id="insertStockClassification" parameterType="hashmap" useGeneratedKeys="true" keyProperty="CLASSIFICATION_NO">
+		INSERT INTO admin_stock_classification_tb(NAME, CREATE_USER_NO)
+		VALUES(#{name}, #{createUserNo})
+	</insert>
+	
+	<update id="updateStockClassification" parameterType="hashmap">
+		UPDATE admin_stock_classification_tb
+		SET NAME = #{name}
+		, UPDATE_USER_NO = #{updateUserNo}
+		, UPDATE_DT = NOW()
+		WHERE CLASSIFICATION_NO = ${classificationNo}
+	</update>
+	
+	<delete id="deleteStockClassification" parameterType="hashmap">
+		UPDATE admin_stock_classification_tb
+		SET FLAG = 2
+		, UPDATE_USER_NO = #{updateUserNo}
+		, UPDATE_DT = now()
+		WHERE CLASSIFICATION_NO = ${classificationNo}
+	</delete>
+	<!-- admin_stock_classification_tb:E -->
+	
+	
+	
+	<!-- question_tb:S -->
+	<sql id="selectQuestionSql">
+		SELECT QUESTION_NO, A.FUNERAL_NO, C.FUNERAL_NAME, C.BOSS_NAME, B.NAME, CONTENTS, QUESTION_FLAG, A.REMARKS
+			, (SELECT KO FROM common_code_tb WHERE TARGET = 'QUESTION' AND VALUE = A.QUESTION_FLAG) AS QUESTION_FLAG_NAME
+			, DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d') AS CREATE_DT, A.CREATE_USER_NO
+			, (SELECT NAME FROM user_tb WHERE USER_NO = A.CREATE_USER_NO) AS CREATE_USER_NAME
+			, DATE_FORMAT(A.UPDATE_DT, '%Y-%m-%d') AS UPDATE_DT, A.UPDATE_USER_NO
+			, (SELECT NAME FROM user_tb WHERE USER_NO = A.UPDATE_USER_NO) AS UPDATE_USER_NAME
+		FROM question_tb A LEFT JOIN user_tb B ON A.CREATE_USER_NO = B.USER_NO
+		LEFT JOIN funeral_info_tb C ON A.FUNERAL_NO = C.FUNERAL_NO
+		WHERE 1=1
+		<if test="questionNo != null and questionNo != ''">
+			AND QUESTION_NO = ${questionNo}
+		</if>
+	</sql>
+	
+	<select id="selectQuestionTotalCount" parameterType="hashmap" resultType="string">
+		SELECT COUNT(*) AS total FROM (<include refid="selectQuestionSql"/>) A
+	</select>
+	
+	<select id="selectQuestionList" parameterType="hashmap" resultType="hashmap">
+		<include refid="selectQuestionSql"/>
+		<if test="order != null and order != ''">ORDER BY ${order}</if>
+		<if test="queryPage != null and queryPage != ''">LIMIT ${queryPage}, ${display}</if>
+	</select>
+	
+	<update id="updateQuestion" parameterType="hashmap">
+		UPDATE question_tb
+		SET REMARKS = #{remarks}
+		, UPDATE_USER_NO = #{updateUserNo}
+		, UPDATE_DT = NOW()
+		WHERE QUESTION_NO = ${questionNo}
+	</update>
+	<!-- question_tb:E -->
+	
+	
+	<!-- funeral_info_tb:S -->
+	<sql id="selectFuneralHallSql">
+		SELECT A.FUNERAL_NO, B.FUNERAL_NAME, B.BOSS_NAME, B.BUS_NO, B.CONTACT, B.ADDRESS
+			, SUM(A.TOTAL_CNT) AS TOTAL_CNT
+			, SUM(A.GOING_CNT) AS GOING_CNT
+			, SUM(A.TOTAL_CNT)-SUM(A.GOING_CNT) AS EMPTY_CNT
+		FROM(
+			SELECT A.FUNERAL_NO, COUNT(*) AS TOTAL_CNT, 0 AS GOING_CNT
+			FROM raspberry_connection_tb A
+			WHERE CLASSIFICATION = 10
+            AND A.FLAG = 1
+			GROUP BY A.FUNERAL_NO
+			UNION ALL
+			SELECT C.FUNERAL_NO, 0 AS TOTAL_CNT, SUM(IF(NOW() BETWEEN C.ENTRANCE_ROOM_DT AND C.CARRYING_DT, 1, 0)) AS GOING_CNT
+			FROM raspberry_connection_tb A LEFT JOIN event_raspberry_connection B ON A.RASPBERRY_CONNECTION_NO = B.RASPBERRY_CONNECTION_NO
+			LEFT JOIN event_tb C ON B.EVENT_NO = C.EVENT_NO
+			WHERE C.EVENT_NO IS NOT NULL
+            AND A.FLAG = 1 AND C.EVENT_ALIVE_FLAG = 1 AND C.CHOOMO_FLAG = 0
+			GROUP BY C.FUNERAL_NO
+		    ) A LEFT JOIN funeral_info_tb B ON A.FUNERAL_NO = B.FUNERAL_NO
+ 		LEFT JOIN user_tb C ON A.FUNERAL_NO = C.FUNERAL_NO
+		WHERE A.FUNERAL_NO IS NOT NULL
+		<if test="searchText != null and searchText != ''">
+			AND B.FUNERAL_NAME LIKE CONCAT('%', #{searchText},'%')
+		</if>
+		GROUP BY A.FUNERAL_NO
+	</sql>
+	
+	<select id="selectFuneralHallTotalCount" parameterType="hashmap" resultType="string">
+		SELECT COUNT(*) AS total FROM (<include refid="selectFuneralHallSql"/>) A
+	</select>
+	
+	<select id="selectFuneralHallList" parameterType="hashmap" resultType="hashmap">
+		<include refid="selectFuneralHallSql"/>
+		<if test="order != null and order != ''">ORDER BY ${order}</if>
+		<if test="queryPage != null and queryPage != ''">LIMIT ${queryPage}, ${display}</if>
+	</select>
+	<!-- funeral_info_tb:E -->
+	
+	
+	<!-- funeral_info_tb:S
+	     관리자 번호 5개 필드 추가 21.08.09
+	
+	-->
+	<sql id="selectAllFuneralHallSql">
+SELECT	*
+,		A.FUNERAL-A.GOING_CNT AS EMPTY_CNT
+FROM(	SELECT	A.FUNERAL_NO
+		,		A.FUNERAL_NAME
+		,		A.BOSS_NAME
+		,		A.HOMEPAGE
+		,		A.ADDRESS
+		,		A.ADDRESS_DETAIL
+		,		A.SIDO
+		,		A.GUNGU 
+		,		(SELECT	NAME
+				 FROM	city_code_tb
+				 WHERE	CODE = SIDO) AS SIDO_NAME 
+		,		(SELECT	NAME
+				 FROM	city_code_tb
+				 WHERE	CODE = GUNGU) AS GUNGU_NAME 
+		,		A.CONTACT
+		,		A.PARKING_CNT
+		,		A.RESTAURANT
+		,		A.STORE
+		,		A.PARKING
+		,		A.WAITING_ROOM
+		,		A.DISABLED_PERSON_FACILITY
+		,		A.OPERATION_KIND
+		,		A.OPERATION_TYPE 
+		,		A.FUNERAL_CNT
+		,		A.ENSHRINE_CNT
+		,		A.FUNERAL_IMG
+		,		A.LOGO_IMG
+		,		A.LAT
+		,		A.LNG
+		,		A.LOCATION
+		,		A.CALCULATE_FLAG
+		,		A.CALCULATE_NAME
+		,		A.CALCULATE_CONTACT
+		,		A.CALCULATE_EMAIL 
+		,		A.MGR_NM_2
+		,		A.MGR_NM_3
+		,		A.MGR_NM_4
+		,		A.MGR_NM_5
+		,		A.MGR_PHONE_2
+		,		A.MGR_PHONE_3
+		,		A.MGR_PHONE_4
+		,		A.MGR_PHONE_5		
+		,		A.WREATH
+		,		A.MANAGER_NO
+		,		A.PHOTO_MANAGER_NO
+		,		A.ALLIANCE_FLAG
+		,		A.ALLIANCE
+		,		A.CALLMIX
+		,		A.FUNERAL_FLAG 
+		,		B.USER_NO
+		,		B.NAME AS USER_NAME 
+		,		SUM(IF(C.CLASSIFICATION = 10, 1, 0)) AS FUNERAL 
+		,		SUM(IF(C.CLASSIFICATION = 20, 1, 0)) AS PHOTO 
+		,		SUM(IF(C.CLASSIFICATION = 30, 1, 0)) AS ALL_STATUS 
+		,		SUM(IF(C.CLASSIFICATION = 40, 1, 0)) AS ENTRY 
+		,		SUM(IF(C.CLASSIFICATION = 50, 1, 0)) AS SPECIAL 
+		,		(SELECT	COUNT(*)
+				 FROM	event_tb
+				 WHERE	FUNERAL_NO = A.FUNERAL_NO
+				 AND EVENT_ALIVE_FLAG = 1
+				 AND CHOOMO_FLAG = 0
+				 AND NOW() BETWEEN ENTRANCE_ROOM_DT AND CARRYING_DT) AS GOING_CNT
+		FROM	funeral_info_tb A
+		LEFT JOIN user_tb B 
+		ON	A.MANAGER_NO = B.USER_NO
+		LEFT JOIN raspberry_connection_tb C 
+		ON	A.FUNERAL_NO = C.FUNERAL_NO
+		AND C.FLAG = 1
+		GROUP BY A.FUNERAL_NO) A
+WHERE	1 = 1
+		<if test="userNo != null and userNo != ''">
+			AND A.USER_NO IS NOT NULL
+		</if>
+		<if test="registeFlag != null and registeFlag != ''">
+			AND A.USER_NO IS NULL
+		</if>
+		<if test="searchText != null and searchText != ''">
+			AND (A.FUNERAL_NAME LIKE CONCAT('%', #{searchText},'%') OR A.GUNGU_NAME LIKE CONCAT('%', #{searchText},'%'))
+		</if>
+	</sql>
+	
+	<select id="selectAllFuneralHallTotalCount" parameterType="hashmap" resultType="string">
+		SELECT COUNT(*) AS total FROM (<include refid="selectAllFuneralHallSql"/>) A
+	</select>
+	
+	<select id="selectAllFuneralHallList" parameterType="hashmap" resultType="hashmap">
+		<include refid="selectAllFuneralHallSql"/>
+		<if test="order != null and order != ''">ORDER BY ${order}</if>
+		<if test="queryPage != null and queryPage != ''">LIMIT ${queryPage}, ${display}</if>
+	</select>
+	
+	<select id="selectFuneralManagerList" parameterType="hashmap" resultType="hashmap">
+		SELECT *
+		FROM user_tb
+		WHERE ALIVE_FLAG = 1 
+		AND LV IN(90, 91)
+        ORDER BY NAME
+	</select>
+	
+	<select id="selectFuneralPhotoManagerList" parameterType="hashmap" resultType="hashmap">
+		SELECT *
+		FROM user_tb
+		WHERE ALIVE_FLAG = 1 
+		AND LV = 39
+	</select>
+	
+	
+<!-- 21.08.09 관리자 번호 5개등록 추가  -->
+	<insert id="insertAllFuneralHall" parameterType="hashmap" useGeneratedKeys="true" keyProperty="FUNERAL_NO">
+	INSERT INTO funeral_info_tb(FUNERAL_NAME
+	, 							BUS_NO
+	, 							BOSS_NAME
+	, 							HOMEPAGE
+	, 							ADDRESS
+	, 							ADDRESS_DETAIL
+	, 							SIDO
+	, 							GUNGU
+	, 							CONTACT
+	, 							PARKING_CNT
+	, 							RESTAURANT
+	, 							STORE
+	, 							PARKING
+	,		 					WAITING_ROOM
+	, 							DISABLED_PERSON_FACILITY
+	, 							OPERATION_TYPE
+	, 							OPERATION_KIND
+	, 							FUNERAL_CNT
+	, 							ENSHRINE_CNT
+	, 							FUNERAL_IMG
+	, 							LOGO_IMG
+	, 							LAT
+	, 							LNG
+	, 							LOCATION
+	, 							CALCULATE_NAME
+	, 							CALCULATE_CONTACT
+	, 							CALCULATE_EMAIL
+	, 							CALCULATE_FLAG
+	, 							WREATH
+	, 							MANAGER_NO
+	<if test="photoManagerNo != null and photoManagerNo != ''">,PHOTO_MANAGER_NO</if> 
+	,							CALLMIX
+	,							FUNERAL_FLAG
+	,							CREATE_USER_NO
+	,							MGR_NM_2
+	,							MGR_NM_3
+	,							MGR_NM_4
+	,							MGR_NM_5
+	,							MGR_PHONE_2
+	,							MGR_PHONE_3
+	,							MGR_PHONE_4
+	,							MGR_PHONE_5	)
+		VALUES(					#{funeralName}
+	, 							#{busNo}
+	, 							#{bossName}
+	, 							#{homepage}
+	, 							#{address}
+	, 							#{addressDetail}
+	, 							#{sido}
+	, 							#{gungu}
+	, 							#{contact}
+	, 							#{parkingCnt}
+	, 							#{restaurant}
+	, 							#{store}
+	, 							#{parking}
+	, 							#{waitingRoom}
+	, 							#{disabledPersonFacility}
+	, 							#{operationType}
+	, 							#{operationKind}
+	, 							#{funeralCnt}
+	, 							#{enshrineCnt}
+	, 							#{funeralImg}
+	, 							#{logoImg}
+	, 							#{lat}
+	, 							#{lng}
+	, 							#{location}
+	, 							#{calculateName}
+	, 							#{calculateContact}
+	, 							#{calculateEmail}
+	, 							#{calculateFlag}
+	, 							#{wreath}
+	, 							#{managerNo}
+	 <if test="photoManagerNo != null and photoManagerNo != ''">, #{photoManagerNo}</if> 
+	,							#{callmix}
+	,							#{funeralFlag}
+	,							#{createUserNo}
+	,							#{MGR_NM_2}
+	,							#{MGR_NM_3}
+	,							#{MGR_NM_4}
+	,							#{MGR_NM_5}
+	,							#{MGR_PHONE_2}
+	,							#{MGR_PHONE_3}
+	,							#{MGR_PHONE_4}
+	,							#{MGR_PHONE_5})
+	</insert>
+	
+	<!-- 21.08.09 관리자 번호 5개등록 추가  -->
+	<update id="updateAllFuneralHall" parameterType="hashmap">
+		UPDATE funeral_info_tb
+		SET FUNERAL_NAME = #{funeralName}
+		, BUS_NO = #{busNo}
+		, BOSS_NAME = #{bossName}
+		, HOMEPAGE = #{homepage}
+		, ADDRESS = #{address}
+		, ADDRESS_DETAIL = #{addressDetail}
+		, SIDO = #{sido}
+		, GUNGU = #{gungu}
+		, CONTACT = #{contact}
+		, PARKING_CNT = #{parkingCnt}
+		, RESTAURANT = #{restaurant}
+		, STORE = #{store}
+		, PARKING = #{parking}
+		, WAITING_ROOM = #{waitingRoom}
+		, DISABLED_PERSON_FACILITY = #{disabledPersonFacility}
+		, OPERATION_TYPE = #{operationType}
+		, OPERATION_KIND = #{operationKind}
+		, FUNERAL_CNT = #{funeralCnt}
+		, ENSHRINE_CNT = #{enshrineCnt}
+		, FUNERAL_IMG = #{funeralImg}
+		, LOGO_IMG = #{logoImg}
+		, LAT = #{lat}
+		, LNG = #{lng}
+		, CALCULATE_NAME = #{calculateName}
+		, CALCULATE_CONTACT = #{calculateContact}
+		, CALCULATE_EMAIL = #{calculateEmail}
+		, CALCULATE_FLAG = #{calculateFlag}
+		, LOCATION = #{location}
+		, WREATH = #{wreath}
+		, MANAGER_NO = #{managerNo}
+		<if test="photoManagerNo != null and photoManagerNo != ''">
+			, PHOTO_MANAGER_NO = #{photoManagerNo}
+		</if>
+		, CALLMIX = #{callmix}
+		, FUNERAL_FLAG = #{funeralFlag}
+		, UPDATE_USER_NO = #{updateUserNo}
+		, UPDATE_DT = NOW()		
+		, MGR_NM_2 = #{MGR_NM_2}
+		, MGR_NM_3 = #{MGR_NM_3}
+		, MGR_NM_4 = #{MGR_NM_4}
+		, MGR_NM_5 = #{MGR_NM_5}		
+		, MGR_PHONE_2 = #{MGR_PHONE_2}
+		, MGR_PHONE_3 = #{MGR_PHONE_3}
+		, MGR_PHONE_4 = #{MGR_PHONE_4}
+		, MGR_PHONE_5 = #{MGR_PHONE_5}
+		WHERE FUNERAL_NO = ${funeralNo}
+	</update>
+	
+	
+	<delete id="deleteAllFuneralHall" parameterType="hashmap">
+	</delete>
+	<!-- funeral_info_tb:E -->
+	
+	
+	
+	<!-- raspberry_connection_tb:S -->
+	<select id="selectRaspberryConnectionList" parameterType="hashmap" resultType="hashmap">
+		SELECT A.RASPBERRY_CONNECTION_NO, A.FUNERAL_NO, A.CLASSIFICATION
+			, (SELECT KO FROM common_code_tb WHERE TARGET = 'RASPBERRY_CONNECTION_CLASSIFICATION' AND VALUE = A.CLASSIFICATION) AS CLASSIFICATION_NAME
+			, A.EXPOSURE , A.APPELLATION, A.BUILDING_NAME, A.FLOOR, A.AREA_SIZE 
+			, A.CREATE_USER_NO, A.UPDATE_USER_NO
+			, DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d') AS CREATE_DT
+			, DATE_FORMAT(A.UPDATE_DT, '%Y-%m-%d') AS UPDATE_DT
+            , COUNT(B.RASPBERRY_ID) AS RAS_CNT
+		FROM raspberry_connection_tb A LEFT JOIN raspberry_tb B ON A.RASPBERRY_CONNECTION_NO = B.RASPBERRY_CONNECTION_NO
+		WHERE A.FLAG = 1
+		<if test="funeralNo != null and funeralNo != ''">
+			AND A.FUNERAL_NO = ${funeralNo}
+		</if>
+        GROUP BY A.RASPBERRY_CONNECTION_NO
+	</select>
+	
+	
+	<insert id="insertRaspberryConnection" parameterType="hashmap" useGeneratedKeys="true" keyProperty="RASPBERRY_CONNECTION_NO">
+		INSERT INTO raspberry_connection_tb(FUNERAL_NO, CLASSIFICATION, EXPOSURE, APPELLATION, BUILDING_NAME, FLOOR, AREA_SIZE, CREATE_USER_NO)
+		VALUES(#{funeralNo}, ${classification}, #{exposure}, #{appellation}, #{buildingName}, #{floor}, #{areaSize}, #{createUserNo})
+	</insert>
+	
+	<update id="updateRaspberryConnection" parameterType="hashmap">
+		UPDATE raspberry_connection_tb
+		SET FUNERAL_NO = #{funeralNo}
+		<if test="classification != null and classification != ''">, CLASSIFICATION = #{classification}</if>
+		, EXPOSURE = #{exposure}
+		, APPELLATION = #{appellation}
+		, BUILDING_NAME = #{buildingName}
+		, FLOOR = #{floor}
+		, AREA_SIZE = #{areaSize}
+		, UPDATE_USER_NO = #{updateUserNo}
+		, UPDATE_DT = NOW()
+		WHERE RASPBERRY_CONNECTION_NO = ${respberryConnectionNo}
+	</update>
+	
+	<delete id="deleteRaspberryConnection" parameterType="hashmap">
+		UPDATE raspberry_connection_tb
+		SET FLAG = 2
+		, UPDATE_USER_NO = #{updateUserNo}
+		, UPDATE_DT = now()
+		WHERE RASPBERRY_CONNECTION_NO = ${respberryConnectionNo}
+	</delete>
+	<!-- raspberry_connection_tb:E -->
+	
+	
+	<!-- statistics_funeral_tb:S -->
+	<sql id="selectStatisticsFuneralSql">
+		SELECT A.FUNERAL_NO, B.FUNERAL_NAME, COUNT(*) AS CNT
+		FROM event_tb A LEFT JOIN funeral_info_tb B ON A.FUNERAL_NO = B.FUNERAL_NO
+        WHERE A.CHOOMO_FLAG = 0 
+        AND DATE_FORMAT(A.ENTRANCE_ROOM_DT, '%Y%m') BETWEEN #{calFrom} AND #{calTo}
+		GROUP BY A.FUNERAL_NO
+	</sql>
+	
+	<select id="selectStatisticsFuneralTotalCount" parameterType="hashmap" resultType="string">
+		SELECT COUNT(*) AS total FROM (<include refid="selectStatisticsFuneralSql"/>) A
+	</select>
+	
+	<select id="selectStatisticsFuneralList" parameterType="hashmap" resultType="hashmap">
+		<include refid="selectStatisticsFuneralSql"/>
+		<if test="order != null and order != ''">ORDER BY ${order}</if>
+		<if test="queryPage != null and queryPage != ''">LIMIT ${queryPage}, ${display}</if>
+	</select>
+	<!-- statistics_funeral_tb:E -->
+	
+	<!-- statistics_area_tb:S -->
+	<sql id="selectStatisticsAreaSql">
+		SELECT A.SIDO, (SELECT LV1 FROM city_code_tb WHERE CODE = A.SIDO) AS SIDO_NAME, COUNT(B.EVENT_NO) AS CNT
+		FROM funeral_info_tb A LEFT JOIN event_tb B ON A.FUNERAL_NO = B.FUNERAL_NO
+        WHERE B.CHOOMO_FLAG = 0
+        AND DATE_FORMAT(B.ENTRANCE_ROOM_DT, '%Y%m') BETWEEN #{calFrom} AND #{calTo}
+		GROUP BY A.SIDO
+	</sql>
+	
+	<select id="selectStatisticsAreaTotalCount" parameterType="hashmap" resultType="string">
+		SELECT COUNT(*) AS total FROM (<include refid="selectStatisticsAreaSql"/>) A
+	</select>
+	
+	<select id="selectStatisticsAreaList" parameterType="hashmap" resultType="hashmap">
+		<include refid="selectStatisticsAreaSql"/>
+		<if test="order != null and order != ''">ORDER BY ${order}</if>
+		<if test="queryPage != null and queryPage != ''">LIMIT ${queryPage}, ${display}</if>
+	</select>
+	<!-- statistics_area_tb:E -->
+	
+	<!-- statistics_user_tb:S -->
+	<sql id="selectStatisticsUserSql">
+		SELECT A.MANAGER_NO, (SELECT NAME FROM user_tb WHERE USER_NO = A.MANAGER_NO) AS USER_NAME, COUNT(B.EVENT_NO) AS CNT
+		FROM funeral_info_tb A LEFT JOIN event_tb B ON A.FUNERAL_NO = B.FUNERAL_NO
+		WHERE A.MANAGER_NO IS NOT NULL
+		AND B.CHOOMO_FLAG = 0
+        AND DATE_FORMAT(B.ENTRANCE_ROOM_DT, '%Y%m') BETWEEN #{calFrom} AND #{calTo}
+		GROUP BY A.MANAGER_NO
+	</sql>
+	
+	<select id="selectStatisticsUserTotalCount" parameterType="hashmap" resultType="string">
+		SELECT COUNT(*) AS total FROM (<include refid="selectStatisticsUserSql"/>) A
+	</select>
+	
+	<select id="selectStatisticsUserList" parameterType="hashmap" resultType="hashmap">
+		<include refid="selectStatisticsUserSql"/>
+		<if test="order != null and order != ''">ORDER BY ${order}</if>
+		<if test="queryPage != null and queryPage != ''">LIMIT ${queryPage}, ${display}</if>
+	</select>
+	<!-- statistics_user_tb:E -->
+	
+	
+	<!--********************************************* 장례식장관리자부분  *****************************************-->
+	<!-- event:S -->
+	<select id="selectCMName" parameterType="hashmap" resultType="hashmap">
+		SELECT A.EVENT_NO, A.CM_NAME, group_concat(C.APPELLATION) AS APPELLATION
+		FROM event_tb A LEFT JOIN event_raspberry_connection B ON A.EVENT_NO = B.EVENT_NO
+		LEFT JOIN raspberry_connection_tb C ON B.RASPBERRY_CONNECTION_NO = C.RASPBERRY_CONNECTION_NO
+		WHERE A.EVENT_NO = #{eventNo}
+		GROUP BY A.EVENT_NO
+	</select>
+	
+	
+	<select id="selectOrderTotalList" parameterType="hashmap" resultType="hashmap">
+		SELECT A.ITEM_NO, 0 AS RANDOM_ITEM_NO, A.NAME AS ITEM_NAME, A.CLASSIFICATION_NAME, A.UNIT
+			, A.PRICE, A.VAT_PRICE, A.VAT_FLAG, SUM(A.ORDER_CNT) AS ORDER_CNT, SUM(A.ORDER_PRICE) AS ORDER_PRICE, A.PARTNER_FLAG, A.REFLECT_FLAG, A.IDX
+		FROM(
+			SELECT B.ITEM_NO, B.NAME, MAX(C.NAME) AS CLASSIFICATION_NAME, MAX(B.UNIT) AS UNIT, MAX(B.PRICE) AS PRICE, MAX(B.IDX) AS IDX
+				, IF(MAX(B.VAT_FLAG) = 1, MAX(B.PRICE), MAX(B.PRICE)+MAX(B.PRICE)*0.1) AS VAT_PRICE
+	            , SUM(A.CNT) AS ORDER_CNT, SUM(A.CNT*IF(B.VAT_FLAG = 1, B.PRICE, B.PRICE+B.PRICE*0.1)) AS ORDER_PRICE, MAX(B.VAT_FLAG) AS VAT_FLAG, MAX(B.REFLECT_FLAG) AS REFLECT_FLAG
+	            , MAX(D.PARTNER_FLAG) AS PARTNER_FLAG
+			FROM event_order_tb A LEFT JOIN funeral_item_tb B ON A.ITEM_NO = B.ITEM_NO
+			LEFT JOIN funeral_classification_tb C ON B.CLASSIFICATION_NO = C.CLASSIFICATION_NO
+            LEFT JOIN partner_management_tb D ON B.PARTNER_NO = D.PARTNER_NO
+			WHERE EVENT_NO = #{eventNo}
+            AND A.RANDOM_ITEM_NO = 0
+			GROUP BY B.ITEM_NO, B.NAME
+			UNION ALL
+			SELECT B.ITEM_NO, B.NAME, MAX(C.NAME) AS CLASSIFICATION_NAME, MAX(B.UNIT) AS UNIT, MAX(B.PRICE) AS PRICE, MAX(B.IDX) AS IDX
+				, IF(MAX(B.VAT_FLAG) = 1, MAX(B.PRICE), MAX(B.PRICE)+MAX(B.PRICE)*0.1) AS VAT_PRICE
+                , -SUM(A.CNT) AS ORDER_CNT, -SUM(A.CNT*IF(B.VAT_FLAG = 1, B.PRICE, B.PRICE+B.PRICE*0.1)) AS ORDER_PRICE, MAX(B.VAT_FLAG) AS VAT_FLAG, MAX(B.REFLECT_FLAG) AS REFLECT_FLAG
+	            , MAX(D.PARTNER_FLAG) AS PARTNER_FLAG
+			FROM event_take_back_tb A LEFT JOIN funeral_item_tb B ON A.ITEM_NO = B.ITEM_NO
+			LEFT JOIN funeral_classification_tb C ON B.CLASSIFICATION_NO = C.CLASSIFICATION_NO
+            LEFT JOIN partner_management_tb D ON B.PARTNER_NO = D.PARTNER_NO
+			WHERE EVENT_NO = #{eventNo}
+            AND A.RANDOM_ITEM_NO = 0
+			GROUP BY B.ITEM_NO, B.NAME
+			) A
+		GROUP BY A.ITEM_NO, A.NAME, A.CLASSIFICATION_NAME, A.UNIT, A.PRICE, A.VAT_PRICE, A.VAT_FLAG, A.PARTNER_FLAG, A.REFLECT_FLAG, A.IDX
+		HAVING SUM(A.ORDER_CNT) > 0
+        UNION ALL
+        SELECT A.ITEM_NO, A.RANDOM_ITEM_NO, A.ITEM_NAME, A.CLASSIFICATION_NAME, A.UNIT, A.PRICE, A.VAT_PRICE, A.VAT_FLAG, SUM(A.ORDER_CNT) AS ORDER_CNT, SUM(A.ORDER_PRICE) AS ORDER_PRICE
+        	, A.PARTNER_FLAG, A.REFLECT_FLAG, 9999999 AS IDX
+		FROM (
+			SELECT 0 AS ITEM_NO, A.RANDOM_ITEM_NO, A.NAME AS ITEM_NAME, C.NAME AS CLASSIFICATION_NAME, A.UNIT, A.PRICE
+				, IF(A.VAT_FLAG = 1, A.PRICE, A.PRICE+A.PRICE*0.1) AS VAT_PRICE
+				, B.CNT AS ORDER_CNT, B.CNT * IF(A.VAT_FLAG = 1, A.PRICE, A.PRICE+A.PRICE*0.1) AS ORDER_PRICE, A.VAT_FLAG, 2 AS REFLECT_FLAG
+				, D.PARTNER_FLAG
+			FROM event_random_item A LEFT JOIN event_order_tb B ON A.RANDOM_ITEM_NO = B.RANDOM_ITEM_NO
+			LEFT JOIN funeral_classification_tb C ON A.CLASSIFICATION_NO = C.CLASSIFICATION_NO
+            LEFT JOIN partner_management_tb D ON A.PARTNER_NO = D.PARTNER_NO
+			WHERE A.EVENT_NO = #{eventNo}
+			AND B.CNT > 0
+			UNION ALL
+			SELECT 0 AS ITEM_NO, A.RANDOM_ITEM_NO, A.NAME AS ITEM_NAME, C.NAME AS CLASSIFICATION_NAME, A.UNIT, A.PRICE
+				, IF(A.VAT_FLAG = 1, A.PRICE, A.PRICE+A.PRICE*0.1) AS VAT_PRICE
+				, -B.CNT AS ORDER_CNT, -B.CNT * IF(A.VAT_FLAG = 1, A.PRICE, A.PRICE+A.PRICE*0.1) AS ORDER_PRICE, A.VAT_FLAG, 2 AS REFLECT_FLAG
+				, D.PARTNER_FLAG
+			FROM event_random_item A LEFT JOIN event_take_back_tb B ON A.RANDOM_ITEM_NO = B.RANDOM_ITEM_NO
+			LEFT JOIN funeral_classification_tb C ON A.CLASSIFICATION_NO = C.CLASSIFICATION_NO
+            LEFT JOIN partner_management_tb D ON A.PARTNER_NO = D.PARTNER_NO
+			WHERE A.EVENT_NO = #{eventNo}
+			AND B.CNT > 0) A
+		GROUP BY A.ITEM_NO, A.RANDOM_ITEM_NO, A.ITEM_NAME, A.CLASSIFICATION_NAME, A.UNIT, A.PRICE, A.VAT_PRICE, A.VAT_FLAG, A.PARTNER_FLAG, A.REFLECT_FLAG
+		HAVING SUM(A.ORDER_CNT) > 0
+		ORDER BY IDX, ITEM_NO DESC, RANDOM_ITEM_NO DESC
+	</select>
+	
+	<insert id="insertEventRandomItem" parameterType="hashmap" useGeneratedKeys="true" keyProperty="RANDOM_ITEM_NO">
+		INSERT INTO event_random_item(EVENT_NO, PARTNER_NO, CLASSIFICATION_NO, NAME, UNIT, PRICE, VAT_FLAG, COMPANY)
+		VALUES (#{eventNo}, #{partnerNo}, #{classification}, #{name}, #{unit}, REPLACE(#{price}, ',', ''), #{vatFlag}, #{company})
+	</insert>
+	
+	<insert id="insertEventOrder" parameterType="hashmap" useGeneratedKeys="true" keyProperty="ORDER_NO">
+		INSERT INTO event_order_tb(EVENT_NO, ITEM_NO, RANDOM_ITEM_NO, CNT, ORDER_NAME, CREATE_USER_NO)
+		VALUES
+			<foreach collection="orderList" item="item" index="index" separator=",">
+				(#{item.eventNo}, #{item.itemNo}, #{item.randomItemNo}, #{item.cnt}, #{item.orderName}, #{item.createUserNo})
+			</foreach>
+	</insert>
+	
+	<select id="selectRandomItemList" parameterType="hashmap" resultType="hashmap">
+		SELECT A.RANDOM_ITEM_NO, A.EVENT_NO, A.PARTNER_NO, A.CLASSIFICATION_NO, B.NAME AS CLASSIFICATION_NAME, A.NAME AS ITEM_NAME, A.UNIT
+			, A.PRICE, IF(A.VAT_FLAG = 1, A.PRICE, A.PRICE+A.PRICE*0.1) AS VAT_PRICE, A.VAT_FLAG, A.COMPANY, C.PARTNER_FLAG
+		FROM event_random_item A LEFT JOIN funeral_classification_tb B ON A.CLASSIFICATION_NO = B.CLASSIFICATION_NO
+        LEFT JOIN partner_management_tb C ON A.PARTNER_NO = C.PARTNER_NO
+		WHERE A.RANDOM_ITEM_NO = #{randomItemNo}
+		ORDER BY A.RANDOM_ITEM_NO DESC
+	</select>
+	
+	<delete id="deleteEventOrderTmp" parameterType="hashmap">
+		DELETE 
+		FROM event_order_tmp
+		WHERE EVENT_NO = ${eventNo}
+	</delete>
+	
+	<insert id="insertEventOrderTmp" parameterType="hashmap">
+		INSERT INTO event_order_tmp(EVENT_NO, ITEM_NO, RANDOM_ITEM_NO, CNT, ORDER_NAME)
+		VALUES
+			<foreach collection="orderList" item="item" index="index" separator=",">
+				(#{item.eventNo}, #{item.itemNo}, #{item.randomItemNo}, #{item.cnt}, #{item.orderName})
+			</foreach>
+	</insert>
+	
+	<insert id="insertEventOrderStock" parameterType="hashmap" useGeneratedKeys="true" keyProperty="STOCK_NO">
+		INSERT INTO funeral_stock_tb(FUNERAL_NO, STOCK_DT, STOCK_FLAG, STOCK_DETAIL_FLAG, CREATE_USER_NO)
+		VALUES (#{funeralNo}, #{stockDt}, 2, 2, #{createUserNo})
+	</insert>
+	
+	<select id="selectEventOrderRePrintList" parameterType="hashmap" resultType="hashmap">
+		SELECT A.EVENT_NO, A.CNT, A.ORDER_NAME, B.NAME AS ITEM_NAME, B.VAT_FLAG
+			, B.PRICE, IF(B.VAT_FLAG = 1, B.PRICE, B.PRICE+B.PRICE*0.1) AS VAT_PRICE, C.PARTNER_FLAG
+		FROM event_order_tmp A LEFT JOIN funeral_item_tb B ON A.ITEM_NO = B.ITEM_NO
+        LEFT JOIN partner_management_tb C ON B.PARTNER_NO = C.PARTNER_NO
+		WHERE A.ITEM_NO != 0
+		AND A.EVENT_NO = #{eventNo}
+		UNION ALL
+		SELECT A.EVENT_NO, A.CNT, A.ORDER_NAME, B.NAME AS ITEM_NAME, B.VAT_FLAG
+			, B.PRICE, IF(B.VAT_FLAG = 1, B.PRICE, B.PRICE+B.PRICE*0.1) AS VAT_PRICE, C.PARTNER_FLAG
+		FROM event_order_tmp A LEFT JOIN event_random_item B ON A.RANDOM_ITEM_NO = B.RANDOM_ITEM_NO
+        LEFT JOIN partner_management_tb C ON B.PARTNER_NO = C.PARTNER_NO
+		WHERE A.RANDOM_ITEM_NO != 0
+		AND A.EVENT_NO = #{eventNo}
+	</select>
+	
+	<select id="selectEventTakeBackRePrintList" parameterType="hashmap" resultType="hashmap">
+		SELECT A.EVENT_NO, A.CNT, A.TAKE_BACK_NAME, B.NAME AS ITEM_NAME, B.VAT_FLAG
+			, B.PRICE, IF(B.VAT_FLAG = 1, B.PRICE, B.PRICE+B.PRICE*0.1) AS VAT_PRICE, C.PARTNER_FLAG
+		FROM event_take_back_tmp A LEFT JOIN funeral_item_tb B ON A.ITEM_NO = B.ITEM_NO
+        LEFT JOIN partner_management_tb C ON B.PARTNER_NO = C.PARTNER_NO
+		WHERE A.ITEM_NO != 0
+		AND A.EVENT_NO = #{eventNo}
+		UNION ALL
+		SELECT A.EVENT_NO, A.CNT, A.TAKE_BACK_NAME, B.NAME AS ITEM_NAME, B.VAT_FLAG
+			, B.PRICE, IF(B.VAT_FLAG = 1, B.PRICE, B.PRICE+B.PRICE*0.1) AS VAT_PRICE, C.PARTNER_FLAG
+		FROM event_take_back_tmp A LEFT JOIN event_random_item B ON A.RANDOM_ITEM_NO = B.RANDOM_ITEM_NO
+        LEFT JOIN partner_management_tb C ON B.PARTNER_NO = C.PARTNER_NO
+		WHERE A.RANDOM_ITEM_NO != 0
+		AND A.EVENT_NO = #{eventNo}
+	</select>
+	
+	<insert id="insertEventOrderStockStatus" parameterType="hashmap" useGeneratedKeys="true">
+		INSERT INTO funeral_stock_status_tb(STOCK_NO, STOCK_ITEM_NO, CNT)
+		VALUES
+			<foreach collection="stockList" item="item" index="index" separator=",">
+				(#{STOCK_NO}, #{item.itemNo}, #{item.cnt})
+			</foreach>
+	</insert>
+	
+	
+	<insert id="insertEventTakeBack" parameterType="hashmap" useGeneratedKeys="true" keyProperty="TAKE_BACK_NO">
+		INSERT INTO event_take_back_tb(EVENT_NO, ITEM_NO, RANDOM_ITEM_NO, CNT, TAKE_BACK_NAME, CREATE_USER_NO)
+		VALUES
+			<foreach collection="orderList" item="item" index="index" separator=",">
+				(#{item.eventNo}, #{item.itemNo}, #{item.randomItemNo}, #{item.cnt}, #{item.takeBackName}, #{item.createUserNo})
+			</foreach>
+	</insert>
+	
+	<delete id="deleteEventTakeBackTmp" parameterType="hashmap">
+		DELETE 
+		FROM event_take_back_tmp
+		WHERE EVENT_NO = ${eventNo}
+	</delete>
+	
+	<insert id="insertEventTakeBackTmp" parameterType="hashmap">
+		INSERT INTO event_take_back_tmp(EVENT_NO, ITEM_NO, RANDOM_ITEM_NO, CNT, TAKE_BACK_NAME)
+		VALUES
+			<foreach collection="orderList" item="item" index="index" separator=",">
+				(#{item.eventNo}, #{item.itemNo}, #{item.randomItemNo}, #{item.cnt}, #{item.orderName})
+			</foreach>
+	</insert>
+	
+	<insert id="insertEventTakeBackStock" parameterType="hashmap" useGeneratedKeys="true" keyProperty="STOCK_NO">
+		INSERT INTO funeral_stock_tb(FUNERAL_NO, STOCK_DT, STOCK_FLAG, STOCK_DETAIL_FLAG, CREATE_USER_NO)
+		VALUES (#{funeralNo}, #{stockDt}, 1, 4, #{createUserNo})
+	</insert>
+	
+	<insert id="insertEventTakeBackStockStatus" parameterType="hashmap" useGeneratedKeys="true">
+		INSERT INTO funeral_stock_status_tb(STOCK_NO, STOCK_ITEM_NO, CNT)
+		VALUES
+			<foreach collection="stockList" item="item" index="index" separator=",">
+				(#{STOCK_NO}, #{item.itemNo}, #{item.cnt})
+			</foreach>
+	</insert>
+	
+	<sql id="selectEventOrderSql">
+		SELECT A.FLAG, A.EVENT_NO, B.NAME AS ITEM_NAME, A.CNT, B.UNIT, B.PRICE
+			, (A.CNT*IF(B.VAT_FLAG = 1, B.PRICE, B.PRICE+B.PRICE*0.1)) AS ORDER_PRICE, A.ORDER_NAME, DATE_FORMAT(A.CREATE_DT, '%m-%d %H:%i') AS CREATE_DT
+		FROM(
+			SELECT A.EVENT_NO, A.ITEM_NO, A.CNT, A.ORDER_NAME, '주문' AS FLAG, A.CREATE_DT
+			FROM event_order_tb A
+			UNION ALL
+			SELECT B.EVENT_NO, B.ITEM_NO, B.CNT, B.TAKE_BACK_NAME AS ORDER_NAME, '반품' AS FLAG, B.CREATE_DT
+			FROM event_take_back_tb B
+		) A LEFT JOIN funeral_item_tb B ON A.ITEM_NO = B.ITEM_NO
+		WHERE A.EVENT_NO = #{eventNo}
+		AND B.NAME IS NOT NULL
+		UNION ALL
+		SELECT A.FLAG, A.EVENT_NO, B.NAME AS ITEM_NAME, A.CNT, B.UNIT, B.PRICE
+			, (A.CNT*IF(B.VAT_FLAG = 1, B.PRICE, B.PRICE+B.PRICE*0.1)) AS ORDER_PRICE, A.ORDER_NAME, DATE_FORMAT(A.CREATE_DT, '%m-%d %H:%i') AS CREATE_DT
+		FROM(
+			SELECT A.EVENT_NO, A.RANDOM_ITEM_NO, A.CNT, A.ORDER_NAME, '주문' AS FLAG, A.CREATE_DT
+			FROM event_order_tb A
+			UNION ALL
+			SELECT B.EVENT_NO, B.RANDOM_ITEM_NO, B.CNT, B.TAKE_BACK_NAME AS ORDER_NAME, '반품' AS FLAG, B.CREATE_DT
+			FROM event_take_back_tb B
+		) A LEFT JOIN event_random_item B ON A.RANDOM_ITEM_NO = B.RANDOM_ITEM_NO
+		WHERE A.EVENT_NO = #{eventNo}
+		AND B.NAME IS NOT NULL
+	</sql>
+	
+	<select id="selectEventOrderTotalCount" parameterType="hashmap" resultType="string">
+		SELECT COUNT(*) AS total FROM (<include refid="selectEventOrderSql"/>) A
+	</select>
+	
+	<select id="selectEventOrderList" parameterType="hashmap" resultType="hashmap">
+		<include refid="selectEventOrderSql"/>
+		<if test="order != null and order != ''">ORDER BY ${order}</if>
+		<if test="queryPage != null and queryPage != ''">LIMIT ${queryPage}, ${display}</if>
+	</select>
+	
+	
+<!-- 	<select id="selectTotalOrderList" parameterType="hashmap" resultType="hashmap"> -->
+<!-- 		SELECT A.EVENT_NO, A.ITEM_NO, B.NAME AS ITEM_NAME, SUM(A.CNT) AS CNT, B.UNIT, B.PRICE AS PRICE -->
+<!-- 			, (SUM(A.CNT)*B.PRICE) AS ORDER_PRICE -->
+<!-- 		FROM( -->
+<!-- 			SELECT A.EVENT_NO, A.ITEM_NO, A.CNT -->
+<!-- 			FROM event_order_tb A -->
+<!-- 			UNION ALL -->
+<!-- 			SELECT B.EVENT_NO, B.ITEM_NO, -B.CNT -->
+<!-- 			FROM event_take_back_tb B -->
+<!-- 		) A LEFT JOIN funeral_item_tb B ON A.ITEM_NO = B.ITEM_NO -->
+<!-- 		WHERE A.EVENT_NO = #{eventNo} -->
+<!-- 		GROUP BY A.EVENT_NO, A.ITEM_NO, B.NAME, B.PRICE, B.UNIT -->
+<!-- 	</select> -->
+	
+<!-- 	<select id="selectTotalPriceList" parameterType="hashmap" resultType="hashmap"> -->
+<!-- 		SELECT A.EVENT_NO, SUM(A.ORDER_PRICE) AS ORDER_PRICE, SUM(A.TAKE_BACK_PRICE) AS TAKE_BACK_PRICE, SUM(A.ORDER_PRICE-A.TAKE_BACK_PRICE) AS TOTAL_PRICE -->
+<!-- 		FROM( -->
+<!-- 			SELECT A.EVENT_NO, SUM(A.CNT*B.PRICE) AS ORDER_PRICE, 0 AS TAKE_BACK_PRICE, 0 AS TOTAL_PRICE -->
+<!-- 			FROM event_order_tb A LEFT JOIN funeral_item_tb B ON A.ITEM_NO = B.ITEM_NO -->
+<!-- 		    GROUP BY A.EVENT_NO, A.CNT, B.PRICE -->
+<!-- 			UNION ALL -->
+<!-- 			SELECT A.EVENT_NO, 0 AS ORDER_PRICE, SUM(A.CNT*B.PRICE) AS TAKE_BACK_PRICE, 0 AS TOTAL_PRICE -->
+<!-- 			FROM event_take_back_tb A LEFT JOIN funeral_item_tb B ON A.ITEM_NO = B.ITEM_NO -->
+<!-- 		    GROUP BY A.EVENT_NO, A.CNT, B.PRICE -->
+<!-- 		) A -->
+<!-- 		WHERE A.EVENT_NO = #{eventNo} -->
+<!-- 		GROUP BY A.EVENT_NO -->
+<!-- 	</select> -->
+	
+
+	<select id="selectPartnerCalculateList" parameterType="hashmap" resultType="hashmap">
+		SELECT A.PARTNER_NO, B.NAME AS PARTNER_NAME, B.BUS_NO, B.NICE_CAT_ID
+			, SUM(A.ORDER_PRICE) AS ORDER_PRICE
+			, SUM(A.TAKE_BACK_PRICE) AS TAKE_BACK_PRICE
+			, SUM(A.TOTAL_PRICE) AS TOTAL_PRICE
+			, SUM(A.CASH_PRICE) AS CASH_PRICE
+			, SUM(A.CARD_PRICE) AS CARD_PRICE
+			, SUM(A.TOTAL_PRICE)-SUM(A.CASH_PRICE)-SUM(A.CARD_PRICE) AS REAL_TOTAL_PRICE
+		FROM(
+			SELECT A.PARTNER_NO
+                , SUM(IF(A.FLAG = 'order', A.VAT_PRICE, 0)) AS ORDER_PRICE
+                , SUM(IF(A.FLAG = 'takeback', A.VAT_PRICE, 0)) AS TAKE_BACK_PRICE
+				, SUM(A.VAT_PRICE) AS TOTAL_PRICE
+				, 0 AS CASH_PRICE
+				, 0 AS CARD_PRICE
+				, 0 AS CANCEL_PRICE
+			FROM(
+				SELECT B.PARTNER_NO, A.ITEM_NO, A.CNT, A.CNT*IF(B.VAT_FLAG = 1, B.PRICE, B.PRICE+B.PRICE*0.1) AS VAT_PRICE, A.FLAG
+				FROM(
+					SELECT A.EVENT_NO, A.ITEM_NO, A.CNT, 'order' AS FLAG FROM event_order_tb A WHERE A.ITEM_NO != 0
+					UNION ALL
+					SELECT A.EVENT_NO, A.ITEM_NO, -A.CNT, 'takeback' AS FLAG FROM event_take_back_tb A WHERE A.ITEM_NO != 0
+				) A LEFT JOIN funeral_item_tb B ON A.ITEM_NO = B.ITEM_NO
+				WHERE EVENT_NO = #{eventNo}
+                UNION ALL
+				SELECT B.PARTNER_NO, A.RANDOM_ITEM_NO AS ITEM_NO, A.CNT, A.CNT*IF(B.VAT_FLAG = 1, B.PRICE, B.PRICE+B.PRICE*0.1) AS VAT_PRICE, A.FLAG
+				FROM(
+					SELECT A.EVENT_NO, A.RANDOM_ITEM_NO, A.CNT, 'order' AS FLAG from event_order_tb A WHERE A.ITEM_NO = 0
+					UNION ALL
+					SELECT A.EVENT_NO, A.RANDOM_ITEM_NO, -A.CNT, 'takeback' AS FLAG from event_take_back_tb A WHERE A.ITEM_NO = 0
+				) A LEFT JOIN event_random_item B ON A.RANDOM_ITEM_NO = B.RANDOM_ITEM_NO
+				WHERE A.EVENT_NO = #{eventNo}
+			) A
+			GROUP BY A.PARTNER_NO
+			UNION ALL
+			SELECT A.PARTNER_NO
+				, IFNULL(SUM(B.ORDER_PRICE), 0) AS ORDER_PRICE
+				, IFNULL(SUM(B.TAKE_BACK_PRICE), 0) AS TAKE_BACK_PRICE
+				, IFNULL(SUM(B.TOTAL_PRICE), 0) AS TOTAL_PRICE
+				, IFNULL(SUM(B.CASH_PRICE), 0) AS CASH_PRICE
+				, IFNULL(SUM(B.CARD_PRICE), 0) AS CARD_PRICE
+				, IFNULL(SUM(B.CANCEL_PRICE), 0) AS CANCEL_PRICE
+			FROM partner_management_tb A LEFT JOIN (
+							SELECT A.PARTNER_NO
+			                    , 0 AS ORDER_PRICE
+			                    , 0 AS TAKE_BACK_PRICE
+			                    , 0 AS TOTAL_PRICE
+								, IF(A.PAY_FLAG = 1, A.DISCOUNT_PRICE+A.PAY_PRICE, 0) AS CARD_PRICE 
+								, IF(A.PAY_FLAG = 2, A.DISCOUNT_PRICE+A.PAY_PRICE, 0) AS CASH_PRICE 
+								, IF(A.PAY_FLAG = 3, A.DISCOUNT_PRICE+A.PAY_PRICE, 0) AS CANCEL_PRICE
+							FROM event_calculate_tb A
+							WHERE EVENT_NO = #{eventNo}
+							) B ON A.PARTNER_NO = B.PARTNER_NO
+			WHERE FUNERAL_NO = #{funeralNo}
+			GROUP BY A.PARTNER_NO
+   			) A LEFT JOIN partner_management_tb B ON A.PARTNER_NO = B.PARTNER_NO
+		GROUP BY A.PARTNER_NO
+        ORDER BY A.PARTNER_NO
+	</select>
+	
+	<select id="selectCalculateHistoryList" parameterType="hashmap" resultType="hashmap">
+		SELECT A.CALCULATE_NO 
+			, DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d %h:%i') AS CREATE_DT
+			, DATE_FORMAT(A.UPDATE_DT, '%Y-%m-%d %h:%i') AS UPDATE_DT
+			, A.PARTNER_NO, B.NAME AS PARTNER_NAME
+			, A.PAY_FLAG, (SELECT KO FROM common_code_tb WHERE TARGET = 'PAY' AND VALUE = A.PAY_FLAG) AS PAY_FLAG_NAME
+			, (A.DISCOUNT_PRICE + A.PAY_PRICE) AS PAY_PRICE
+			, A.DISCOUNT_PRICE, A.PAY_PRICE AS REAL_PAY_PRICE
+			, A.REMARKS
+            , quota, amount, appNo, substring(appDate, 1, 6) AS appDate, catId
+		FROM event_calculate_tb A LEFT JOIN partner_management_tb B ON A.PARTNER_NO = B.PARTNER_NO
+		WHERE A.EVENT_NO = #{eventNo}
+		ORDER BY A.CREATE_DT DESC, A.UPDATE_DT DESC
+	</select>
+	
+	<select id="selectReceiptHistoryList" parameterType="hashmap" resultType="hashmap">
+		SELECT A.RECEIPT_NO
+			, DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d %h:%i') AS CREATE_DT
+			, DATE_FORMAT(A.UPDATE_DT, '%Y-%m-%d %h:%i') AS UPDATE_DT
+			, A.PARTNER_NO, B.NAME AS PARTNER_NAME
+            , A.ISSUE_NO, A.RECEIPT_PRICE, A.FLAG
+            , A.REMARKS
+            , type, issuerNo, amount, substring(appDate, 1, 6) AS appDate, appNo, catId
+		FROM event_receipt_tb A LEFT JOIN partner_management_tb B ON A.PARTNER_NO = B.PARTNER_NO
+		WHERE A.EVENT_NO = #{eventNo}
+		ORDER BY A.CREATE_DT DESC, A.UPDATE_DT DESC
+	</select>
+	
+	<select id="selectCalculateDiscountList" parameterType="hashmap" resultType="hashmap">
+		SELECT A.DISCOUNT_NO, A.PARTNER_NO, A.DISCOUNT_INFO, A.DISCOUNT_RATE, B.NAME
+		FROM discount_tb A LEFT JOIN partner_management_tb B ON A.PARTNER_NO = B.PARTNER_NO
+		WHERE B.FUNERAL_NO = #{funeralNo}
+	</select>
+	
+	<insert id="insertCalCulate" parameterType="hashmap" useGeneratedKeys="true" keyProperty="CALCULATE_NO">
+		INSERT INTO event_calculate_tb(EVENT_NO, PARTNER_NO, DISCOUNT_PRICE, PAY_PRICE, PAY_FLAG, REMARKS, CREATE_USER_NO, serviceCode, rejectCode, testCode, appDate, amount, vat, appNo, issuerName, captureName, mno, cardNo, quota, catId)
+		VALUES
+			(#{eventNo}, #{partnerNo}, #{discountPrice}, #{payPrice}, #{payFlag}, #{remarks}, #{createUserNo}, #{serviceCode}, #{rejectCode}, #{testCode}, #{appDate}, #{amount}, #{vat}, #{appNo}, #{issuerName}, #{captureName}, #{mno}, #{cardNo}, #{quota}, #{catId})
+	</insert>
+	
+	<insert id="insertReceipt" parameterType="hashmap" useGeneratedKeys="true" keyProperty="RECEIPT_NO">
+		INSERT INTO event_receipt_tb(EVENT_NO, PARTNER_NO, ISSUE_NO, RECEIPT_PRICE, FLAG, REMARKS, CREATE_USER_NO, serviceCode, rejectCode, appDate, amount, vat, appNo, issuerName, type, issuerNo, serialNo, catId, msg)
+		VALUES
+			(#{eventNo}, #{partnerNo}, #{issueNo}, #{receiptPrice}, 1, #{remarks}, #{createUserNo}, #{serviceCode}, #{rejectCode}, #{appDate}, #{amount}, #{vat}, #{appNo}, #{issuerName}, #{type}, #{issuerNo}, #{serialNo}, #{catId}, #{msg})
+	</insert>
+	
+	<delete id="updateCalCulate" parameterType="hashmap">
+		UPDATE event_calculate_tb
+		SET PAY_FLAG = 3
+		, UPDATE_USER_NO = #{updateUserNo}
+		, UPDATE_DT = now()
+		, cancel_appDate = #{appDate}
+		WHERE CALCULATE_NO = #{calculateNo}
+	</delete>
+	
+	<delete id="updateReceipt" parameterType="hashmap">
+		UPDATE event_receipt_tb
+		SET FLAG = 2
+		, UPDATE_USER_NO = #{updateUserNo}
+		, UPDATE_DT = now()
+		, cancel_appDate = #{appDate}
+		WHERE RECEIPT_NO = #{receiptNo}
+	</delete>
+	
+	
+	<select id="selectEventFuneralInfoList" parameterType="hashmap" resultType="hashmap">
+		SELECT *
+		FROM funeral_info_tb
+		WHERE funeral_no = (SELECT FUNERAL_NO FROM event_tb WHERE EVENT_NO = #{eventNo})
+	</select>
+	
+	<select id="selectEventOrderPartner" parameterType="hashmap" resultType="hashmap">
+		SELECT A.PARTNER_NO, A.NAME
+		FROM (
+			SELECT A.EVENT_NO, B.PARTNER_NO, C.NAME
+			FROM event_order_tb A LEFT JOIN funeral_item_tb B ON A.ITEM_NO = B.ITEM_NO
+			LEFT JOIN partner_management_tb C ON B.PARTNER_NO = C.PARTNER_NO
+			WHERE A.EVENT_NO = #{eventNo}
+	        AND B.PARTNER_NO IS NOT NULL
+	        UNION ALL
+	        SELECT A.EVENT_NO, B.PARTNER_NO, C.NAME
+			FROM event_order_tb A LEFT JOIN event_random_item B ON A.RANDOM_ITEM_NO = B.RANDOM_ITEM_NO
+			LEFT JOIN partner_management_tb C ON B.PARTNER_NO = C.PARTNER_NO
+			WHERE A.EVENT_NO = #{eventNo}
+	        AND B.PARTNER_NO IS NOT NULL
+			) A
+		<if test="partnerNo != null and partnerNo != ''">
+			WHERE A.PARTNER_NO = ${partnerNo}
+		</if>
+		GROUP BY A.EVENT_NO, A.PARTNER_NO, A.NAME
+		ORDER BY A.PARTNER_NO ASC
+	</select>
+	
+	<select id="selectEventOrderPrintList" parameterType="hashmap" resultType="hashmap">
+		SELECT *
+		FROM(
+			SELECT B.NAME AS NAME, C.NAME AS CLASSIFICATION_NAME, B.UNIT, IF(B.VAT_FLAG = 1, B.PRICE, B.PRICE+B.PRICE*0.1) AS VAT_PRICE, SUM(A.CNT) AS CNT, (SUM(A.CNT)*IF(B.VAT_FLAG = 1, B.PRICE, B.PRICE+B.PRICE*0.1)) AS PRICE, B.PARTNER_NO, 1 AS FLAG
+				, SUM(IF(A.ORDER_FLAG = 'order', A.CNT, 0)) AS ORDER_CNT
+				, SUM(IF(A.ORDER_FLAG = 'takeback', A.CNT, 0)) AS TAKE_BACK_CNT
+			FROM(
+				SELECT A.EVENT_NO, A.ITEM_NO, A.CNT, 'order' AS ORDER_FLAG
+				FROM event_order_tb A
+				UNION ALL
+				SELECT B.EVENT_NO, B.ITEM_NO, -B.CNT, 'takeback' AS ORDER_FLAG
+				FROM event_take_back_tb B
+				) A LEFT JOIN funeral_item_tb B ON A.ITEM_NO = B.ITEM_NO
+			LEFT JOIN funeral_classification_tb C ON B.CLASSIFICATION_NO = C.CLASSIFICATION_NO
+			WHERE A.EVENT_NO = #{eventNo}
+            AND B.NAME IS NOT NULL
+			GROUP BY A.EVENT_NO, A.ITEM_NO, B.NAME, B.PRICE, B.UNIT, B.PARTNER_NO, C.NAME
+			
+			UNION ALL
+			
+			SELECT B.NAME AS NAME, C.NAME AS CLASSIFICATION_NAME, B.UNIT, IF(B.VAT_FLAG = 1, B.PRICE, B.PRICE+B.PRICE*0.1) AS VAT_PRICE, SUM(A.CNT) AS CNT, (SUM(A.CNT)*IF(B.VAT_FLAG = 1, B.PRICE, B.PRICE+B.PRICE*0.1)) AS PRICE, B.PARTNER_NO, 1 AS FLAG
+				, SUM(IF(A.ORDER_FLAG = 'order', A.CNT, 0)) AS ORDER_CNT
+				, SUM(IF(A.ORDER_FLAG = 'takeback', A.CNT, 0)) AS TAKE_BACK_CNT
+			FROM(
+				SELECT A.EVENT_NO, A.RANDOM_ITEM_NO AS ITEM_NO, A.CNT, 'order' AS ORDER_FLAG
+				FROM event_order_tb A
+				UNION ALL
+				SELECT B.EVENT_NO, B.RANDOM_ITEM_NO AS ITEM_NO, -B.CNT, 'takeback' AS ORDER_FLAG
+				FROM event_take_back_tb B
+			) A LEFT JOIN event_random_item B ON A.ITEM_NO = B.RANDOM_ITEM_NO
+			LEFT JOIN funeral_classification_tb C ON B.CLASSIFICATION_NO = C.CLASSIFICATION_NO
+			WHERE A.EVENT_NO = #{eventNo}
+            AND B.NAME IS NOT NULL
+			GROUP BY A.EVENT_NO, A.ITEM_NO, B.NAME, B.PRICE, B.UNIT, B.PARTNER_NO, C.NAME
+			UNION ALL
+			SELECT A.NAME, A.CLASSIFICATION_NAME, A.UNIT, '' AS VAT_PRICE, SUM(CNT) AS CNT, SUM(PRICE) AS PIRCE, A.PARTNER_NO, A.FLAG, 0 AS ORDER_CNT, 0 AS TAKE_BACK_CNT
+			FROM(
+				SELECT IF(C.NAME, '[합계]', CONCAT('[',C.NAME,'  합계]')) AS NAME, '' AS CLASSIFICATION_NAME, '' AS UNIT, SUM(CNT) AS CNT, SUM(IF(B.VAT_FLAG = 1, B.PRICE, B.PRICE+B.PRICE*0.1)*A.CNT) AS PRICE, B.PARTNER_NO, 2 AS FLAG
+				FROM event_order_tb A LEFT JOIN funeral_item_tb B ON A.ITEM_NO = B.ITEM_NO
+				LEFT JOIN partner_management_tb C ON B.PARTNER_NO = C.PARTNER_NO
+				WHERE A.EVENT_NO = #{eventNo}
+				AND C.NAME IS NOT NULL
+				GROUP BY A.EVENT_NO, C.NAME, B.PARTNER_NO
+				UNION ALL
+				SELECT IF(C.NAME, '[합계]', CONCAT('[',C.NAME,'  합계]')) AS NAME, '' AS CLASSIFICATION_NAME, '' AS UNIT, -SUM(CNT) AS CNT, -SUM(IF(B.VAT_FLAG = 1, B.PRICE, B.PRICE+B.PRICE*0.1)*A.CNT) AS PRICE, B.PARTNER_NO, 2 AS FLAG
+				FROM event_take_back_tb A LEFT JOIN funeral_item_tb B ON A.ITEM_NO = B.ITEM_NO
+				LEFT JOIN partner_management_tb C ON B.PARTNER_NO = C.PARTNER_NO
+				WHERE A.EVENT_NO = #{eventNo}
+				AND C.NAME IS NOT NULL
+				GROUP BY A.EVENT_NO, C.NAME, B.PARTNER_NO
+				UNION ALL
+				SELECT IF(C.NAME, '[합계]', CONCAT('[',C.NAME,'  합계]')) AS NAME, '' AS CLASSIFICATION_NAME, '' AS UNIT, SUM(CNT) AS CNT, SUM(IF(B.VAT_FLAG = 1, B.PRICE, B.PRICE+B.PRICE*0.1)*A.CNT) AS PRICE, B.PARTNER_NO, 2 AS FLAG
+				FROM event_order_tb A LEFT JOIN event_random_item B ON A.RANDOM_ITEM_NO = B.RANDOM_ITEM_NO
+				LEFT JOIN partner_management_tb C ON B.PARTNER_NO = C.PARTNER_NO
+				WHERE A.EVENT_NO = #{eventNo}
+				AND C.NAME IS NOT NULL
+				GROUP BY A.EVENT_NO, C.NAME, B.PARTNER_NO
+				UNION ALL
+				SELECT IF(C.NAME, '[합계]', CONCAT('[',C.NAME,'  합계]')) AS NAME, '' AS CLASSIFICATION_NAME, '' AS UNIT, -SUM(CNT) AS CNT, -SUM(IF(B.VAT_FLAG = 1, B.PRICE, B.PRICE+B.PRICE*0.1)*A.CNT) AS PRICE, B.PARTNER_NO, 2 AS FLAG
+				FROM event_take_back_tb A LEFT JOIN event_random_item B ON A.RANDOM_ITEM_NO = B.RANDOM_ITEM_NO
+				LEFT JOIN partner_management_tb C ON B.PARTNER_NO = C.PARTNER_NO
+				WHERE A.EVENT_NO = #{eventNo}
+				AND C.NAME IS NOT NULL
+				GROUP BY A.EVENT_NO, C.NAME, B.PARTNER_NO
+			) A
+            GROUP BY A.NAME, A.CLASSIFICATION_NAME, A.UNIT, A.PARTNER_NO, A.FLAG
+		) A
+		<if test="partnerNo != null and partnerNo != ''">
+			WHERE A.PARTNER_NO = ${partnerNo}
+		</if>
+		ORDER BY A.PARTNER_NO, A.FLAG, A.CLASSIFICATION_NAME, A.NAME
+	</select>
+	
+	<select id="selectEventOrderInfoList" parameterType="hashmap" resultType="hashmap">
+		SELECT A.DM_NAME, GROUP_CONCAT(D.APPELLATION) AS APPELLATION
+			, ENTRANCE_ROOM_NO
+			, DATE_FORMAT(ENTRANCE_ROOM_DT, '%Y-%m-%d %H:%i') AS ENTRANCE_ROOM_DT
+			, DATE_FORMAT(CARRYING_DT, '%Y-%m-%d %H:%i') AS CARRYING_DT
+			, DATE_FORMAT(ENTRANCE_ROOM_START_DT, '%Y-%m-%d %H:%i') AS ENTRANCE_ROOM_START_DT
+			, DATE_FORMAT(ENTRANCE_ROOM_END_DT, '%Y-%m-%d %H:%i') AS ENTRANCE_ROOM_END_DT
+			, CARRYING_YN
+			, B.FUNERAL_NAME, B.ADDRESS, B.ADDRESS_DETAIL, B.BUS_NO, B.CONTACT, B.BOSS_NAME
+		FROM event_tb A LEFT JOIN funeral_info_tb B ON A.FUNERAL_NO = B.FUNERAL_NO
+		LEFT JOIN event_raspberry_connection C ON A.EVENT_NO = C.EVENT_NO
+		LEFT JOIN raspberry_connection_tb D ON C.RASPBERRY_CONNECTION_NO = D.RASPBERRY_CONNECTION_NO
+		WHERE A.EVENT_NO = #{eventNo}
+	</select>
+	
+	
+	<select id="selectEventBoardPrintList" parameterType="hashmap" resultType="hashmap">
+		SELECT A.EVENT_NO, C.APPELLATION, A.DM_NAME, DM_POSITION, A.DM_AGE, A.DM_PHOTO
+			<!-- , IF(A.DM_GENDER = 1, '남', '여') AS DM_GENDER -->
+			<!-- HYH 성별 추가 -->
+			, (CASE
+					WHEN A.DM_GENDER = 0 THEN ''
+					WHEN A.DM_GENDER = 1 THEN '남'
+					WHEN A.DM_GENDER = 2 THEN '여'
+					WHEN A.DM_GENDER = 3 THEN '男'
+					WHEN A.DM_GENDER = 4 THEN '女'
+				END
+			) AS DM_GENDER 
+			<!-- ./HYH - 성별 추가-->
+			, ENTRANCE_ROOM_NO
+			, DATE_FORMAT(ENTRANCE_ROOM_START_DT, '%m월%d일 %H시%i분') AS ENTRANCE_ROOM_START_DT
+			, CARRYING_YN
+			, DATE_FORMAT(CARRYING_DT, '%m월%d일 %H시%i분') AS CARRYING_DT
+			, A.BURIAL_PLOT_NAME
+<!-- 			, group_concat(D.RELATION, ":", D.NAME separator '<![CDATA[<br>]]>') AS FAMILY_NAME -->
+<!-- 			, group_concat('<![CDATA[<div class=family-text><div class=relation>]]>' ,D.RELATION, '<![CDATA[</div><div class=div-name>]]>', D.NAME, '<![CDATA[</div></div>]]>' separator '') AS FAMILY_NAME -->
+		FROM event_tb A LEFT JOIN event_raspberry_connection B ON A.EVENT_NO = B.EVENT_NO AND B.ORDER_NO = 1
+		LEFT JOIN raspberry_connection_tb C ON B.RASPBERRY_CONNECTION_NO = C.RASPBERRY_CONNECTION_NO
+<!-- 		LEFT JOIN (SELECT EVENT_NO, RELATION, group_concat('<![CDATA[<span class=name>]]>',NAME, '<![CDATA[,</span>]]>' separator '') AS NAME FROM event_family_tb GROUP BY EVENT_NO, RELATION) D ON A.EVENT_NO = D.EVENT_NO  -->
+		WHERE A.EVENT_NO = #{eventNo}
+		GROUP BY A.EVENT_NO, C.APPELLATION, A.DM_NAME, A.DM_POSITION, A.DM_PHOTO, A.ENTRANCE_ROOM_START_DT, A.CARRYING_DT, A.BURIAL_PLOT_NAME
+	</select>
+	
+	<select id="selectEventBoardFamilyPrintList" parameterType="hashmap" resultType="hashmap">
+		SELECT A.EVENT_NO, MAX(B.FAMILY_NO)
+			, CONCAT('<![CDATA[<span class=relation>]]>', B.RELATION, '<![CDATA[</span>]]>') AS RELATION
+			, GROUP_CONCAT('<![CDATA[<span class=name>]]>',B.NAME, ',<![CDATA[</span>]]>' ORDER BY B.FAMILY_NO separator '') AS NAME
+		FROM event_tb A LEFT JOIN event_family_tb B ON A.EVENT_NO = B.EVENT_NO
+		WHERE A.CHOOMO_FLAG = 0 
+		AND A.EVENT_NO = #{eventNo}
+		GROUP BY A.EVENT_NO, B.RELATION
+		ORDER BY MAX(B.FAMILY_NO)
+	</select>
+	
+	
+	<select id="selectEventInfoList" parameterType="hashmap" resultType="hashmap">
+		SELECT B.FUNERAL_NAME, A.DM_NAME, A.DM_GENDER, A.DM_AGE
+			, (SELECT KO FROM common_code_tb WHERE TARGET='RELIGION' AND VALUE=A.DM_RELIGION) AS DM_RELIGION
+			, A.DEAD_CAUSE, A.BURIAL_PLOT_NAME, A.DM_ADDR, A.DM_ADDR_DETAIL, A.FUNERAL_SYSTEM, A.CM_NAME
+			, B.FUNERAL_IMG, B.LOGO_IMG
+			, DATE_FORMAT(DEAD_DT, '%Y-%m-%d %H:%i') AS DEAD_DT
+			, A.ENTRANCE_ROOM_NO
+			, DATE_FORMAT(ENTRANCE_ROOM_DT, '%Y-%m-%d %H:%i') AS ENTRANCE_ROOM_DT
+			, DATE_FORMAT(CARRYING_DT, '%Y-%m-%d %H:%i') AS CARRYING_DT
+			, DATE_FORMAT(ENTRANCE_ROOM_START_DT, '%Y-%m-%d %H:%i') AS ENTRANCE_ROOM_START_DT
+			, DATE_FORMAT(ENTRANCE_ROOM_END_DT, '%Y-%m-%d %H:%i') AS ENTRANCE_ROOM_END_DT
+			, A.CARRYING_YN
+			, B.FUNERAL_NAME, B.ADDRESS, B.ADDRESS_DETAIL, B.BUS_NO, B.CONTACT, B.BOSS_NAME
+		FROM event_tb A LEFT JOIN funeral_info_tb B ON A.FUNERAL_NO = B.FUNERAL_NO
+		WHERE A.CHOOMO_FLAG = 0
+		AND A.EVENT_NO = #{eventNo}
+	</select>
+	
+	<select id="selectEventFamilyList" parameterType="hashmap" resultType="hashmap">
+		SELECT A.RELATION, GROUP_CONCAT(A.NAME ORDER BY A.FAMILY_NO separator ', ') AS NAME
+		FROM event_family_tb A
+		WHERE A.EVENT_NO = #{eventNo}
+		GROUP BY A.RELATION
+		ORDER BY MIN(FAMILY_NO) ASC
+	</select>
+	
+	<select id="selectEventBinsoList" parameterType="hashmap" resultType="hashmap">
+		SELECT A.EVENT_NO, B.APPELLATION
+		FROM event_raspberry_connection A
+		LEFT JOIN raspberry_connection_tb B ON A.RASPBERRY_CONNECTION_NO = B.RASPBERRY_CONNECTION_NO
+		WHERE A.EVENT_NO = #{eventNo}
+	</select>
+	<!-- event:E -->
+	
+	
+	<!-- raspberry_connection_tb:S -->
+	<sql id="selectBinsoSql">
+		SELECT A.RASPBERRY_CONNECTION_NO, A.FUNERAL_NO, A.APPELLATION, A.BUILDING_NAME, A.FLOOR, A.AREA_SIZE
+		,GROUP_CONCAT((SELECT PATH FROM binso_img_tb WHERE RASPBERRY_CONNECTION_NO = A.RASPBERRY_CONNECTION_NO ORDER BY IDX LIMIT 1)) AS MAIN_IMG
+		FROM raspberry_connection_tb A
+		WHERE A.CLASSIFICATION = 10
+		AND A.FLAG = 1
+		AND A.FUNERAL_NO = #{funeralNo}
+		GROUP BY A.RASPBERRY_CONNECTION_NO
+	</sql>
+	
+	<select id="selectBinsoTotalCount" parameterType="hashmap" resultType="string">
+		SELECT COUNT(*) AS total FROM (<include refid="selectBinsoSql"/>) A
+	</select>
+	
+	<select id="selectBinsoList" parameterType="hashmap" resultType="hashmap">
+		<include refid="selectBinsoSql"/>
+		<if test="order != null and order != ''">ORDER BY ${order}</if>
+		<if test="queryPage != null and queryPage != ''">LIMIT ${queryPage}, ${display}</if>
+	</select>
+	
+	<delete id="deleteBinsoImg" parameterType="hashmap">
+		DELETE FROM binso_img_tb
+		WHERE RASPBERRY_CONNECTION_NO = ${respberryConnectionNo}
+	</delete>
+	
+	<insert id="insertBinsoImg" parameterType="hashmap" useGeneratedKeys="true" keyProperty="IMG_NO">
+		INSERT INTO binso_img_tb(RASPBERRY_CONNECTION_NO, IDX, PATH)
+		VALUES
+<!-- 			<if test="ftpFileList != null and ftpFileList != ''"> -->
+<!-- 				<foreach collection="ftpFileList" item="item" index="index" separator=","> -->
+<!-- 					(#{respberryConnectionNo}, #{item.fileKey}, #{item.fileFullPath}) -->
+<!-- 				</foreach> -->
+<!-- 			</if> -->
+			<if test="imgList != null and imgList != ''">
+				<foreach collection="imgList" item="item" index="index" separator=",">
+					(#{respberryConnectionNo}, #{item.fileKey}, #{item.fileFullPath})
+				</foreach>
+			</if>
+	</insert>
+	
+	<update id="updateBinso" parameterType="hashmap">
+		UPDATE raspberry_connection_tb
+		SET APPELLATION = #{appellation}
+		, BUILDING_NAME = #{buildingName}
+		, FLOOR = #{floor}
+		, AREA_SIZE = #{areaSize}
+		, UPDATE_USER_NO = #{updateUserNo}
+		, UPDATE_DT = NOW()
+		WHERE RASPBERRY_CONNECTION_NO = ${respberryConnectionNo}
+	</update>
+	
+	<select id="selectBinsoImgList" parameterType="hashmap" resultType="hashmap">
+		SELECT *
+		FROM binso_img_tb
+		WHERE RASPBERRY_CONNECTION_NO = ${respberryConnectionNo}
+		ORDER BY IDX
+	</select>
+	<!-- raspberry_connection_tb:E -->
+	
+	
+	<!-- question_tb:S -->
+	<insert id="insertQuestion" parameterType="hashmap" useGeneratedKeys="true" keyProperty="QUESTION_NO">
+		INSERT INTO question_tb(FUNERAL_NO, CONTENTS, QUESTION_FLAG, CREATE_USER_NO)
+		VALUES(#{funeralNo}, #{contents}, #{questionFlag}, #{createUserNo})
+	</insert>
+	<!-- question_tb:E -->
+	
+	
+
+	<!-- funeral_info_tb:E 
+	 	 2021.08.27 관리자번호 컬럼 추가
+	-->
+	<select id="selectFuneralInfo" parameterType="hashmap" resultType="hashmap">
+		SELECT 	FUNERAL_NO
+		, 		FUNERAL_NAME
+		, 		BUS_NO
+		, 		BOSS_NAME
+		, 		HOMEPAGE
+		, 		CONTACT
+		, 		CALCULATE_NAME
+		, 		CALCULATE_CONTACT
+		,		MGR_NM_2
+		,		MGR_NM_3
+		,		MGR_NM_4
+		,		MGR_NM_5
+		,		MGR_PHONE_2
+		,		MGR_PHONE_3
+		,		MGR_PHONE_4
+		,		MGR_PHONE_5			
+		, 		CALCULATE_EMAIL
+		, 		ADDRESS
+		, 		FUNERAL_IMG
+		, 		LOGO_IMG
+		, 		DISABLED_PERSON_FACILITY
+		, 		WAITING_ROOM
+		, 		OPERATION_KIND
+		, 		PARKING_CNT
+		, 		FUNERAL_CNT
+		, 		SANGHO_NAME	
+		FROM 	funeral_info_tb
+		WHERE 	FUNERAL_NO = #{funeralNo}
+	</select>
+	
+	<!-- funeral_info_tb:E 
+	 	 2021.08.27 관리자번호 컬럼 추가
+	-->	
+	<update id="updateFuneralInfo" parameterType="hashmap">
+		UPDATE funeral_info_tb
+		SET FUNERAL_NAME = #{funeralName}
+		, BOSS_NAME = #{bossName}
+		, HOMEPAGE = #{homepage}
+		, CONTACT = #{contact}
+		, PARKING_CNT = #{parkingCnt}
+		, WAITING_ROOM = #{waitingRoom}
+		, DISABLED_PERSON_FACILITY = #{disabledPersonFacility}
+		, OPERATION_KIND = #{operationKind}
+		, FUNERAL_CNT = #{funeralCnt}
+		, FUNERAL_IMG = #{funeralImg}
+		, LOGO_IMG = #{logoImg}
+		, CALCULATE_NAME = #{calculateName}
+		, CALCULATE_CONTACT = #{calculateContact}
+		, MGR_NM_2 = #{MGR_NM_2}
+		, MGR_NM_3 = #{MGR_NM_3}
+		, MGR_NM_4 = #{MGR_NM_4}
+		, MGR_NM_5 = #{MGR_NM_5}		
+		, MGR_PHONE_2 = #{MGR_PHONE_2}
+		, MGR_PHONE_3 = #{MGR_PHONE_3}
+		, MGR_PHONE_4 = #{MGR_PHONE_4}
+		, MGR_PHONE_5 = #{MGR_PHONE_5}		
+		, CALCULATE_EMAIL = #{calculateEmail}
+		, UPDATE_USER_NO = #{updateUserNo}
+		, UPDATE_DT = NOW()			
+		WHERE FUNERAL_NO = ${funeralNo}
+	</update>
+	
+	<select id="selectFuneralDivideImg" parameterType="hashmap" resultType="hashmap">
+		SELECT FUNERAL_DIVIDE_NO, FUNERAL_NO, DIVIDE, PATH
+		FROM funeral_divide_img
+		WHERE FUNERAL_NO = #{funeralNo}
+	</select>
+	
+	<delete id="deleteFuneralDivdeImg" parameterType="hashmap">
+		DELETE FROM funeral_divide_img
+		WHERE FUNERAL_NO = ${funeralNo}
+	</delete>
+	
+	<insert id="insertFuneralDivdeImg" parameterType="hashmap" useGeneratedKeys="true">
+		INSERT INTO funeral_divide_img(FUNERAL_NO, DIVIDE, PATH)
+		VALUES
+			<foreach collection="divideList" item="item" index="index" separator=",">
+				(#{funeralNo}, #{item.divide}, #{item.path})
+			</foreach>
+	</insert>
+	
+	<delete id="deleteUserMenu" parameterType="hashmap">
+		DELETE 
+		FROM user_menu_tb
+		WHERE USER_NO IN (SELECT USER_NO FROM user_tb WHERE FUNERAL_NO = #{funeralNo})
+		AND MENU_NO IN(${menuNoList})
+	</delete>
+	<!-- funeral_info_tb:E -->
+	
+	
+	<!-- partner_management_tb:S -->
+	<sql id="selectPartnerManagementsql">
+		SELECT A.PARTNER_NO, A.NAME, A.BUS_NO, A.ADDRESS, A.MANAGER, A.TEL, A.EMAIL, A.PARTNER_FLAG
+			, (SELECT KO FROM common_code_tb WHERE TARGET = 'PARTNER_MANAGEMENT' AND VALUE = A.PARTNER_FLAG) AS PARTNER_FLAG_NAME
+			, DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d') AS CREATE_DT
+			, DATE_FORMAT(A.UPDATE_DT, '%Y-%m-%d') AS UPDATE_DT
+    		, (SELECT COUNT(PARTNER_NO) FROM funeral_item_tb WHERE PARTNER_NO = A.PARTNER_NO AND FLAG = 1) AS PARTNER_CNT
+		FROM partner_management_tb A
+		WHERE A.FLAG = 1
+		AND FUNERAL_NO = #{funeralNo}
+	</sql>
+	
+	<select id="selectPartnerManagementTotalCount" parameterType="hashmap" resultType="string">
+		SELECT COUNT(*) AS total FROM (<include refid="selectPartnerManagementsql"/>) A
+	</select>
+	
+	<select id="selectPartnerManagementList" parameterType="hashmap" resultType="hashmap">
+		<include refid="selectPartnerManagementsql"/>
+		<if test="order != null and order != ''">ORDER BY ${order}</if>
+		<if test="queryPage != null and queryPage != ''">LIMIT ${queryPage}, ${display}</if>
+	</select>
+	
+	<insert id="insertPartnerManagement" parameterType="hashmap" useGeneratedKeys="true" keyProperty="PARTNER_NO">
+		INSERT INTO partner_management_tb(FUNERAL_NO, NAME, BUS_NO, ADDRESS, MANAGER, TEL, EMAIL, PARTNER_FLAG, CREATE_USER_NO)
+		VALUES(#{funeralNo}, #{name}, #{busNo}, #{address}, #{manager}, REPLACE(#{tel}, '-', ''), #{email}, #{partnerFlag}, #{createUserNo})
+	</insert>
+	
+	<update id="updatePartnerManagement" parameterType="hashmap">
+		UPDATE partner_management_tb
+		SET FUNERAL_NO = #{funeralNo}
+		, NAME = #{name}
+		, BUS_NO = #{busNo}
+		, ADDRESS = #{address}
+		, MANAGER = #{manager}
+		, TEL = REPLACE(#{tel}, '-', '')
+		, EMAIL = #{email}
+		, PARTNER_FLAG = #{partnerFlag}
+		, UPDATE_USER_NO = #{updateUserNo}
+		, UPDATE_DT = NOW()
+		WHERE PARTNER_NO = ${partnerNo}
+	</update>
+	
+	<delete id="deletePartnerManagement" parameterType="hashmap">
+		UPDATE partner_management_tb
+		SET FLAG = 2
+		, UPDATE_USER_NO = #{updateUserNo}
+		, UPDATE_DT = now()
+		WHERE PARTNER_NO = ${partnerNo}
+	</delete>
+	<!-- partner_management_tb:E -->
+	
+	
+	<!-- funeral_item_tb:S -->
+	<select id="selectFuneralItemPartner" parameterType="hashmap" resultType="hashmap">
+		SELECT PARTNER_NO, FUNERAL_NO, NAME, BUS_NO, ADDRESS
+		FROM partner_management_tb
+		WHERE FLAG = 1
+		AND FUNERAL_NO = #{funeralNo}
+		ORDER BY PARTNER_FLAG
+	</select>
+	
+	<select id="selectFuneralClassificationList" parameterType="hashmap" resultType="hashmap">
+		SELECT A.CLASSIFICATION_NO, A.PARTNER_NO, A.NAME
+			, (SELECT COUNT(*) FROM funeral_item_tb WHERE CLASSIFICATION_NO = A.CLASSIFICATION_NO) AS ITEM_CNT
+		FROM funeral_classification_tb A
+		WHERE A.FLAG = 1 
+		AND A.PARTNER_NO = #{partnerNo}
+		ORDER BY CLASSIFICATION_NO DESC
+	</select>
+	
+	<insert id="insertFuneralClassification" parameterType="hashmap" useGeneratedKeys="true" keyProperty="CLASSIFICATION_NO">
+		INSERT INTO funeral_classification_tb(PARTNER_NO, NAME, CREATE_USER_NO)
+		VALUES(#{partnerNo}, #{name}, #{createUserNo})
+	</insert>
+	
+	<update id="updateFuneralClassification" parameterType="hashmap">
+		UPDATE funeral_classification_tb
+		SET PARTNER_NO = #{partnerNo}
+		, NAME = #{name}
+		, UPDATE_USER_NO = #{updateUserNo}
+		, UPDATE_DT = NOW()
+		WHERE CLASSIFICATION_NO = ${classificationNo}
+	</update>
+	
+	<delete id="deleteFuneralClassification" parameterType="hashmap">
+		UPDATE funeral_classification_tb
+		SET FLAG = 2
+		, UPDATE_USER_NO = #{updateUserNo}
+		, UPDATE_DT = NOW()
+		WHERE CLASSIFICATION_NO = ${classificationNo}
+	</delete>
+	
+	
+	<sql id="selectFuneralItemsql">
+		SELECT A.ITEM_NO, A.PARTNER_NO, A.IDX, A.CODE, A.NAME AS ITEM_NAME, A.CLASSIFICATION_NO, A.UNIT
+			, A.W_PRICE, A.PRICE, IF(A.VAT_FLAG = 1, A.PRICE, A.PRICE+A.PRICE*0.1) AS VAT_PRICE
+			, A.REFLECT_FLAG
+			, (SELECT NAME FROM funeral_classification_tb WHERE PARTNER_NO = #{partnerNo} AND CLASSIFICATION_NO = A.CLASSIFICATION_NO) AS CLASSIFICATION_NAME
+			, A.CREATE_USER_NO, A.UPDATE_USER_NO
+			, DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d') AS CREATE_DT
+			, DATE_FORMAT(A.UPDATE_DT, '%Y-%m-%d') AS UPDATE_DT
+            , (SELECT COUNT(*) FROM funeral_stock_status_tb WHERE STOCK_ITEM_NO = A.ITEM_NO) AS STOCK_CNT
+            , VAT_FLAG, COMPANY, B.PARTNER_FLAG
+		FROM funeral_item_tb A LEFT JOIN partner_management_tb B ON A.PARTNER_NO = B.PARTNER_NO
+		WHERE A.FLAG = 1 
+		AND A.PARTNER_NO = #{partnerNo}
+		<if test="classificationNo != null and classificationNo != ''">
+			AND A.CLASSIFICATION_NO = #{classificationNo}
+		</if>
+	</sql>
+	
+	<select id="selectFuneralItemTotalCount" parameterType="hashmap" resultType="string">
+		SELECT COUNT(*) AS total FROM (<include refid="selectFuneralItemsql"/>) A
+	</select>
+	
+	<select id="selectFuneralItemList" parameterType="hashmap" resultType="hashmap">
+		<include refid="selectFuneralItemsql"/>
+		<if test="order != null and order != ''">ORDER BY ${order}</if>
+		<if test="queryPage != null and queryPage != ''">LIMIT ${queryPage}, ${display}</if>
+	</select>
+	
+	<select id="dupFuneralItemCode" parameterType="hashmap" resultType="int">
+		SELECT COUNT(CODE)
+		FROM funeral_item_tb
+		WHERE FLAG = 1 
+		AND PARTNER_NO = #{partnerNo} 
+		AND CODE = #{dupCode}
+	</select>
+	
+	<insert id="insertFuneralItem" parameterType="hashmap" useGeneratedKeys="true" keyProperty="ITEM_NO">
+		INSERT INTO funeral_item_tb(PARTNER_NO, IDX, CODE, NAME, CLASSIFICATION_NO, UNIT, W_PRICE ,PRICE, REFLECT_FLAG, CREATE_USER_NO, VAT_FLAG, COMPANY)
+		VALUES(#{partnerNo}, #{idx}, #{code}, #{itemName}, #{classification}, #{unit}, REPLACE(#{wPrice}, ',', '0'), REPLACE(#{price}, ',', '0'), #{reflectFlag}, #{createUserNo}, #{vatFlag}, #{company})
+	</insert>
+	
+	<insert id="insertFuneralItemBatch" parameterType="hashmap" useGeneratedKeys="true" keyProperty="ITEM_NO">
+		INSERT INTO funeral_item_tb(PARTNER_NO, IDX, CODE, NAME, CLASSIFICATION_NO, UNIT, W_PRICE ,PRICE, REFLECT_FLAG, CREATE_USER_NO, VAT_FLAG, COMPANY)
+		VALUES
+		<foreach collection="list" item="item" index="index" separator=",">
+			(#{item.partnerNo}, #{item.idx}, #{item.code}, #{item.itemName}, #{item.classification}, #{item.unit}, REPLACE(#{item.wPrice}, ',', '0'), REPLACE(#{item.price}, ',', '0'), #{item.reflectFlag}, #{item.createUserNo}, #{item.vatFlag}, #{item.company})
+		</foreach>
+	</insert>
+	
+	<update id="updateFuneralItem" parameterType="hashmap">
+		UPDATE funeral_item_tb
+		SET PARTNER_NO = #{partnerNo}
+		, IDX = #{idx}
+		, CODE = #{code}
+		, NAME = #{itemName}
+		, CLASSIFICATION_NO = #{classification}
+		, UNIT = #{unit}
+		, PRICE = REPLACE(#{price}, ',', '')
+		, W_PRICE = REPLACE(#{wPrice}, ',', '')
+		, REFLECT_FLAG = #{reflectFlag}
+		, UPDATE_USER_NO = #{updateUserNo}
+		, VAT_FLAG = #{vatFlag}
+		, COMPANY = #{company}
+		, UPDATE_DT = NOW()
+		WHERE ITEM_NO = ${itemNo}
+	</update>
+	
+	<delete id="deleteFuneralItem" parameterType="hashmap">
+		UPDATE funeral_item_tb
+		SET FLAG = 2
+		, UPDATE_USER_NO = #{updateUserNo}
+		, UPDATE_DT = NOW()
+		WHERE ITEM_NO = ${itemNo}
+	</delete>
+	<!-- funeral_item_tb:E -->
+	
+	
+	<!-- set_tb:S -->
+	<sql id="selectSetsql">
+		SELECT A.SET_NO, A.SET_NAME, SUM(C.PRICE*B.CNT) AS PRICE, SUM(IF(C.VAT_FLAG = 1, C.PRICE, C.PRICE+C.PRICE*0.1)*B.CNT) AS VAT_PRICE
+		FROM set_tb A LEFT JOIN set_item_tb B ON A.SET_NO = B.SET_NO
+		LEFT JOIN funeral_item_tb C ON B.ITEM_NO = C.ITEM_NO AND C.FLAG = 1
+		WHERE A.FUNERAL_NO = #{funeralNo}
+		AND A.FLAG = 1
+		<if test="setNo != null and setNo != ''">
+			AND A.SET_NO = #{setNo}
+		</if>
+		GROUP BY A.SET_NO
+	</sql>
+	
+	<select id="selectSetTotalCount" parameterType="hashmap" resultType="string">
+		SELECT COUNT(*) AS total FROM (<include refid="selectSetsql"/>) A
+	</select>
+	
+	<select id="selectSetList" parameterType="hashmap" resultType="hashmap">
+		<include refid="selectSetsql"/>
+		<if test="order != null and order != ''">ORDER BY ${order}</if>
+		<if test="queryPage != null and queryPage != ''">LIMIT ${queryPage}, ${display}</if>
+	</select>
+	
+	<insert id="insertSet" parameterType="hashmap" useGeneratedKeys="true" keyProperty="SET_NO">
+		INSERT INTO set_tb(FUNERAL_NO, SET_NAME, CREATE_USER_NO)
+		VALUES(#{funeralNo}, #{setName}, #{createUserNo})
+	</insert>
+	
+	<update id="updateSet" parameterType="hashmap">
+		UPDATE set_tb
+		SET FUNERAL_NO = #{funeralNo}
+		, SET_NAME = #{setName}
+		, UPDATE_USER_NO = #{updateUserNo}
+		, UPDATE_DT = NOW()
+		WHERE SET_NO = ${setNo}
+	</update>
+	
+	<delete id="deleteSet" parameterType="hashmap">
+		DELETE 
+		FROM set_tb
+		WHERE SET_NO = ${setNo}
+	</delete>
+	<!-- set_tb:E -->
+	
+	
+	<!-- set_item_tb:S -->
+	<select id="selectSetItemList" parameterType="hashmap" resultType="hashmap">
+		SELECT A.SET_ITEM_NO, A.ITEM_NO, B.NAME AS ITEM_NAME, C.NAME AS CLASSIFICATION_NAME, B.UNIT, A.CNT
+			, B.PRICE, IF(B.VAT_FLAG = 1, B.PRICE, B.PRICE+B.PRICE*0.1)AS VAT_PRICE, B.REFLECT_FLAG, B.VAT_FLAG, D.PARTNER_FLAG
+		FROM set_item_tb A LEFT JOIN funeral_item_tb B ON A.ITEM_NO = B.ITEM_NO
+		LEFT JOIN funeral_classification_tb C ON B.CLASSIFICATION_NO = C.CLASSIFICATION_NO
+		LEFT JOIN partner_management_tb D ON C.PARTNER_NO = D.PARTNER_NO
+		WHERE B.ITEM_NO IS NOT NULL
+		AND B.FLAG = 1
+		AND D.FLAG = 1
+        AND A.SET_NO = #{setNo}
+        ORDER BY ITEM_NO ASC
+	</select>
+	
+	<insert id="insertSetItem" parameterType="hashmap" useGeneratedKeys="true" keyProperty="SET_ITEM_NO">
+		INSERT INTO set_item_tb(SET_NO, ITEM_NO, CNT)
+		VALUES
+			<foreach collection="setItemList" item="item" index="index" separator=",">
+				(#{SET_NO}, #{item.itemNo}, ${item.cnt} + ${item.oriCnt})
+			</foreach>
+	</insert>
+	
+	<delete id="deleteSetItem" parameterType="hashmap">
+		DELETE FROM set_item_tb
+		WHERE SET_NO = ${setNo}
+	</delete>
+	<!-- set_item_tb:E -->
+	
+	
+	
+	<!-- discount_tb:S -->
+	<sql id="selectDiscountsql">
+		SELECT A.DISCOUNT_NO, A.PARTNER_NO, A.DISCOUNT_INFO, A.DISCOUNT_RATE
+			, B.NAME AS PARTNER_NAME
+			, A.CREATE_USER_NO, A.UPDATE_USER_NO
+			, DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d') AS CREATE_DT
+			, DATE_FORMAT(A.UPDATE_DT, '%Y-%m-%d') AS UPDATE_DT
+		FROM discount_tb A LEFT JOIN partner_management_tb B ON A.PARTNER_NO = B.PARTNER_NO
+        WHERE B.FUNERAL_NO = #{funeralNo}
+	</sql>
+	
+	<select id="selectDiscountTotalCount" parameterType="hashmap" resultType="string">
+		SELECT COUNT(*) AS total FROM (<include refid="selectDiscountsql"/>) A
+	</select>
+	
+	<select id="selectDiscountList" parameterType="hashmap" resultType="hashmap">
+		<include refid="selectDiscountsql"/>
+		<if test="order != null and order != ''">ORDER BY ${order}</if>
+		<if test="queryPage != null and queryPage != ''">LIMIT ${queryPage}, ${display}</if>
+	</select>
+	
+	<insert id="insertDiscount" parameterType="hashmap" useGeneratedKeys="true" keyProperty="DISCOUNT_NO">
+		INSERT INTO discount_tb(PARTNER_NO, DISCOUNT_INFO, DISCOUNT_RATE, CREATE_USER_NO)
+		VALUES(#{partnerNo}, #{discountInfo}, #{discountRate}, #{createUserNo})
+	</insert>
+	
+	<update id="updateDiscount" parameterType="hashmap">
+		UPDATE discount_tb
+		SET PARTNER_NO = #{partnerNo}
+		, DISCOUNT_INFO = #{discountInfo}
+		, DISCOUNT_RATE = #{discountRate}
+		, UPDATE_USER_NO = #{updateUserNo}
+		, UPDATE_DT = NOW()
+		WHERE DISCOUNT_NO = ${discountNo}
+	</update>
+	
+	<delete id="deleteDiscount" parameterType="hashmap">
+		DELETE FROM discount_tb
+		WHERE DISCOUNT_NO = ${discountNo}
+	</delete>
+	<!-- discount_tb:E -->
+	
+	
+	<!-- funeral_stock_tb:S -->
+	<sql id="selectFuneralStocksql">
+		SELECT A.*
+		FROM(
+			SELECT A.STOCK_NO, DATE_FORMAT(STOCK_DT, '%Y-%m-%d') AS STOCK_DT
+				, A.STOCK_FLAG
+				, (SELECT KO FROM common_code_tb WHERE TARGET = 'STOCK' AND VALUE = A.STOCK_FLAG) AS STOCK_FLAG_NAME
+				, A.STOCK_DETAIL_FLAG
+				, (SELECT KO FROM common_code_tb WHERE TARGET = 'FUNERAL_STOCK_DETAIL' AND VALUE = A.STOCK_DETAIL_FLAG) AS STOCK_DETAIL_FLAG_NAME
+				, GROUP_CONCAT((SELECT NAME FROM funeral_item_tb WHERE ITEM_NO = B.STOCK_ITEM_NO ORDER BY ITEM_NO),' * ',CNT, ' ') AS LIST
+				, A.REMARKS
+			FROM funeral_stock_tb A LEFT JOIN funeral_stock_status_tb B ON A.STOCK_NO = B.STOCK_NO
+			WHERE A.FUNERAL_NO = #{funeralNo}
+			GROUP BY A.STOCK_NO, B.STOCK_NO
+		) A
+		WHERE 1=1
+        AND DATE_FORMAT(A.STOCK_DT, '%Y%m%d') BETWEEN #{calFrom} AND #{calTo}
+		<if test="searchText != null and searchText != ''">
+			AND A.LIST LIKE CONCAT('%', #{searchText},'%')
+		</if>
+		<if test="stockFlag != null and stockFlag != ''">
+			AND A.STOCK_FLAG = #{stockFlag}
+		</if>
+	</sql>
+	
+	<select id="selectFuneralStockTotalCount" parameterType="hashmap" resultType="string">
+		SELECT COUNT(*) AS total FROM (<include refid="selectFuneralStocksql"/>) A
+	</select>
+	
+	<select id="selectFuneralStockList" parameterType="hashmap" resultType="hashmap">
+		<include refid="selectFuneralStocksql"/>
+		<if test="order != null and order != ''">ORDER BY ${order}</if>
+		<if test="queryPage != null and queryPage != ''">LIMIT ${queryPage}, ${display}</if>
+	</select>
+	
+	
+	<select id="selectFuneralStockTotalStatusList" parameterType="hashmap" resultType="hashmap">
+		SELECT A.ITEM_NO, A.NAME AS ITEM_NAME, A.CLASSIFICATION_NO, A.CODE, B.NAME AS CLASSIFICATION_NAME
+			, SUM(A.IN_CNT) AS IN_CNT
+			, SUM(A.OUT_CNT) AS OUT_CNT
+			, SUM(A.IN_CNT - A.OUT_CNT) AS TOTAL_CNT
+		FROM(    
+			SELECT A.ITEM_NO, A.NAME, A.CLASSIFICATION_NO, A.CODE
+				, CASE WHEN C.STOCK_FLAG = 1 THEN SUM(B.CNT) ELSE 0 END AS IN_CNT
+				, CASE WHEN C.STOCK_FLAG = 2 THEN SUM(B.CNT) ELSE 0 END AS OUT_CNT
+			FROM funeral_item_tb A LEFT JOIN funeral_stock_status_tb B ON A.ITEM_NO = B.STOCK_ITEM_NO
+			LEFT JOIN funeral_stock_tb C ON B.STOCK_NO = C.STOCK_NO
+			LEFT JOIN partner_management_tb D ON A.PARTNER_NO = D.PARTNER_NO
+			WHERE D.FUNERAL_NO = #{funeralNo}
+			AND A.REFLECT_FLAG = 1
+			AND A.FLAG = 1
+			GROUP BY A.ITEM_NO, A.NAME, A.CLASSIFICATION_NO, C.STOCK_FLAG, A.CODE
+			) A 
+		LEFT JOIN funeral_classification_tb B ON A.CLASSIFICATION_NO = B.CLASSIFICATION_NO
+		GROUP BY A.ITEM_NO, A.NAME, A.CLASSIFICATION_NO, B.NAME, A.CODE
+		ORDER BY B.CLASSIFICATION_NO, A.ITEM_NO
+	</select>
+	
+	<select id="selectFuneralStockItemList" parameterType="hashmap" resultType="hashmap">
+		SELECT A.ITEM_NO, B.NAME AS CLASSIFICATION_NAME, A.NAME AS ITEM_NAME, A.CODE
+		FROM funeral_item_tb A LEFT JOIN funeral_classification_tb B ON A.CLASSIFICATION_NO = B.CLASSIFICATION_NO
+		LEFT JOIN partner_management_tb C ON A.PARTNER_NO = C.PARTNER_NO
+		WHERE A.REFLECT_FLAG = 1
+		AND A.FLAG = 1 
+		AND C.FLAG = 1
+		AND C.FUNERAL_NO = #{funeralNo}
+	</select>
+	
+	<select id="selectFuneralStockStatusList" parameterType="hashmap" resultType="hashmap">
+		SELECT A.STATUS_NO, A.STOCK_NO, A.STOCK_ITEM_NO, A.CNT
+		FROM funeral_stock_status_tb A
+		WHERE A.STOCK_NO = #{stockNo}
+	</select>
+	
+	<insert id="insertFuneralStock" parameterType="hashmap" useGeneratedKeys="true" keyProperty="STOCK_NO">
+		INSERT INTO funeral_stock_tb(FUNERAL_NO, STOCK_DT, STOCK_FLAG, STOCK_DETAIL_FLAG, REMARKS, CREATE_USER_NO)
+		VALUES(#{funeralNo}, #{stockDt}, #{stockFlag}, #{stockDetailFlag}, #{remarks}, #{createUserNo})
+	</insert>
+	
+	<insert id="insertFuneralStockStatus" parameterType="hashmap">
+		INSERT INTO funeral_stock_status_tb(STOCK_NO, STOCK_ITEM_NO, CNT)
+		VALUES
+			<foreach collection="list" item="item" index="index" separator=",">
+				(#{STOCK_NO}, #{item.stockItemNo}, #{item.cnt})
+			</foreach>
+	</insert>
+	
+	<update id="updateFuneralStock" parameterType="hashmap">
+		UPDATE funeral_stock_tb 
+		SET STOCK_DT = #{stockDt}
+		, STOCK_FLAG = #{stockFlag}
+		, STOCK_DETAIL_FLAG = #{stockDetailFlag}
+		, REMARKS = #{remarks}
+		, UPDATE_USER_NO = #{updateUserNo}
+		, UPDATE_DT = NOW()
+		WHERE STOCK_NO = #{stockNo}
+	</update>
+
+	<delete id="deleteFuneralStockStatus" parameterType="hashmap">
+		DELETE FROM funeral_stock_status_tb
+		WHERE STOCK_NO = #{stockNo}
+	</delete>
+	
+	<delete id="deleteFuneralStock" parameterType="hashmap">
+		DELETE FROM funeral_stock_tb
+		WHERE STOCK_NO = #{stockNo}
+	</delete>
+	<!-- funeral_stock_tb:E -->
+	
+	
+	
+	<!-- statistics_cal_tb:S -->
+	<sql id="selectStatisticsCalSql">
+		SELECT A.CREATE_DT, A.PARTNER_NO, B.NAME AS PARTNER_NAME, SUM(A.ORDER_PRICE - A.TAKE_BACK_PRICE) AS PRICE, SUM(A.W_ORDER_PRICE - A.W_TAKE_BACK_PRICE) AS W_PRICE
+		FROM(
+			SELECT B.PARTNER_NO, SUM(A.CNT*IF(B.VAT_FLAG = 1, B.PRICE, B.PRICE+B.PRICE*0.1)) AS ORDER_PRICE, 0 AS TAKE_BACK_PRICE, SUM(A.CNT*B.W_PRICE) AS W_ORDER_PRICE, 0 AS W_TAKE_BACK_PRICE
+			<choose>
+				<when test="dayFlag != null and dayFlag.equals('month')">
+					, DATE_FORMAT(A.CREATE_DT, '%Y-%m') AS CREATE_DT
+				</when>
+				<otherwise>
+					, DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d') AS CREATE_DT
+				</otherwise>
+			</choose>
+			FROM event_order_tb A LEFT JOIN funeral_item_tb B ON A.ITEM_NO = B.ITEM_NO
+			GROUP BY B.PARTNER_NO
+			<choose>
+				<when test="dayFlag != null and dayFlag.equals('month')">
+					, DATE_FORMAT(A.CREATE_DT, '%Y-%m')
+				</when>
+				<otherwise>
+					, DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d')
+				</otherwise>
+			</choose>
+			UNION ALL
+			SELECT B.PARTNER_NO, 0 AS ORDER_PRICE, SUM(A.CNT*IF(B.VAT_FLAG = 1, B.PRICE, B.PRICE+B.PRICE*0.1)) AS TAKE_BACK_PRICE, 0 AS W_ORDER_PRICE, SUM(A.CNT*B.W_PRICE) AS W_TAKE_BACK_PRICE
+			<choose>
+				<when test="dayFlag != null and dayFlag.equals('month')">
+					, DATE_FORMAT(A.CREATE_DT, '%Y-%m') AS CREATE_DT
+				</when>
+				<otherwise>
+					, DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d') AS CREATE_DT
+				</otherwise>
+			</choose>
+			FROM event_take_back_tb A LEFT JOIN funeral_item_tb B ON A.ITEM_NO = B.ITEM_NO
+			GROUP BY B.PARTNER_NO
+			<choose>
+				<when test="dayFlag != null and dayFlag.equals('month')">
+					, DATE_FORMAT(A.CREATE_DT, '%Y-%m')
+				</when>
+				<otherwise>
+					, DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d')
+				</otherwise>
+			</choose>
+			UNION ALL
+            SELECT B.PARTNER_NO, SUM(A.CNT*IF(B.VAT_FLAG = 1, B.PRICE, B.PRICE+B.PRICE*0.1)) AS ORDER_PRICE, 0 AS TAKE_BACK_PRICE, 0 AS W_ORDER_PRICE, 0 AS W_TAKE_BACK_PRICE
+            <choose>
+				<when test="dayFlag != null and dayFlag.equals('month')">
+					, DATE_FORMAT(A.CREATE_DT, '%Y-%m') AS CREATE_DT
+				</when>
+				<otherwise>
+					, DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d') AS CREATE_DT
+				</otherwise>
+			</choose>
+            FROM event_order_tb A LEFT JOIN event_random_item B ON A.RANDOM_ITEM_NO = B.RANDOM_ITEM_NO AND A.EVENT_NO = B.EVENT_NO
+            GROUP BY B.PARTNER_NO
+			<choose>
+				<when test="dayFlag != null and dayFlag.equals('month')">
+					, DATE_FORMAT(A.CREATE_DT, '%Y-%m')
+				</when>
+				<otherwise>
+					, DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d')
+				</otherwise>
+			</choose>
+            UNION ALL
+            SELECT B.PARTNER_NO, 0 AS ORDER_PRICE, SUM(A.CNT*IF(B.VAT_FLAG = 1, B.PRICE, B.PRICE+B.PRICE*0.1)) AS TAKE_BACK_PRICE, 0 AS W_ORDER_PRICE, 0 AS W_TAKE_BACK_PRICE
+			<choose>
+				<when test="dayFlag != null and dayFlag.equals('month')">
+					, DATE_FORMAT(A.CREATE_DT, '%Y-%m') AS CREATE_DT
+				</when>
+				<otherwise>
+					, DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d') AS CREATE_DT
+				</otherwise>
+			</choose>
+            FROM event_take_back_tb A LEFT JOIN event_random_item B ON A.RANDOM_ITEM_NO = B.RANDOM_ITEM_NO AND A.EVENT_NO = B.EVENT_NO
+            GROUP BY B.PARTNER_NO
+			<choose>
+				<when test="dayFlag != null and dayFlag.equals('month')">
+					, DATE_FORMAT(A.CREATE_DT, '%Y-%m')
+				</when>
+				<otherwise>
+					, DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d')
+				</otherwise>
+			</choose>
+		) A LEFT JOIN partner_management_tb B ON A.PARTNER_NO = B.PARTNER_NO
+		WHERE FUNERAL_NO = #{funeralNo}
+		AND A.CREATE_DT BETWEEN #{calFrom} AND #{calTo}
+		GROUP BY A.CREATE_DT, A.PARTNER_NO, B.NAME
+	</sql>
+	
+	<select id="selectStatisticsCalTotalCount" parameterType="hashmap" resultType="string">
+		SELECT COUNT(*) AS total FROM (<include refid="selectStatisticsCalSql"/>) A
+	</select>
+	
+	<select id="selectStatisticsCalList" parameterType="hashmap" resultType="hashmap">
+		<include refid="selectStatisticsCalSql"/>
+		<if test="order != null and order != ''">ORDER BY ${order}</if>
+		<if test="queryPage != null and queryPage != ''">LIMIT ${queryPage}, ${display}</if>
+	</select>
+	<!-- statistics_cal_tb:E -->
+	
+	
+	<!-- statistics_Binso_tb:S -->
+	<sql id="selectStatisticsBinsoSql">
+		SELECT APPELLATION, A.RASPBERRY_CONNECTION_NO, COUNT(B.EVENT_NO) AS CNT, DATE_FORMAT(CARRYING_DT, '%Y-%m') AS DATE
+		FROM raspberry_connection_tb A LEFT JOIN event_raspberry_connection B ON A.RASPBERRY_CONNECTION_NO = B.RASPBERRY_CONNECTION_NO
+		LEFT JOIN event_tb C ON B.EVENT_NO = C.EVENT_NO
+		WHERE A.FUNERAL_NO = ${funeralNo}
+		AND A.CLASSIFICATION = 10
+		AND C.CHOOMO_FLAG = 0
+		AND DATE_FORMAT(CARRYING_DT, '%Y-%m') BETWEEN #{calFrom} AND #{calTo}
+		GROUP BY A.RASPBERRY_CONNECTION_NO, DATE_FORMAT(CARRYING_DT, '%Y-%m')
+	</sql>
+	
+
+	
+	<select id="selectStatisticsBinsoTotalCount" parameterType="hashmap" resultType="string">
+		SELECT COUNT(*) AS total FROM (<include refid="selectStatisticsBinsoSql"/>) A
+	</select>
+	
+
+	
+	
+	<select id="selectFuneralRaspList" parameterType="hashmap" resultType="hashmap">
+		SELECT A.RASPBERRY_CONNECTION_NO, A.PYTHON_FLAG, #{flag} AS FLAG
+		FROM raspberry_tb A LEFT JOIN raspberry_connection_tb B ON A.RASPBERRY_CONNECTION_NO = B.RASPBERRY_CONNECTION_NO
+		WHERE B.FUNERAL_NO = #{funeralNo}
+	</select>
+	
+	<select id="selectJhRaspList" parameterType="hashmap" resultType="hashmap">
+		SELECT A.RASPBERRY_CONNECTION_NO, A.PYTHON_FLAG, #{flag} AS FLAG
+		FROM raspberry_tb A LEFT JOIN raspberry_connection_tb B ON A.RASPBERRY_CONNECTION_NO = B.RASPBERRY_CONNECTION_NO
+		WHERE B.CLASSIFICATION = 30
+		AND B.FUNERAL_NO = #{funeralNo}
+	</select>
+	
+</mapper>

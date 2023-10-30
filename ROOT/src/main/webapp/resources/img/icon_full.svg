@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
+    <defs>
+        <style>
+            .cls-1{fill:none}.cls-2{fill:#fff;stroke:#bebebe;stroke-width:2px}.cls-3{fill:#bebebe}.cls-4{stroke:none}
+        </style>
+    </defs>
+    <g id="그룹_13273" data-name="그룹 13273" transform="translate(-1909 -155)">
+        <g id="그룹_13251" data-name="그룹 13251" transform="translate(13553 -4046)">
+            <g id="그룹_13249" data-name="그룹 13249">
+                <path id="사각형_19246" d="M0 0h32v32H0z" class="cls-1" data-name="사각형 19246" transform="translate(-11640 4205)"/>
+                <g id="_40짜리_아이콘_투명_배경" data-name="40짜리 아이콘 투명 배경" transform="translate(-11636 4209)">
+                    <path id="사각형_21" d="M0 0h24v24H0z" class="cls-1" data-name="사각형 21"/>
+                </g>
+                <g id="그룹_13248" data-name="그룹 13248">
+                    <g id="사각형_19247" class="cls-2" data-name="사각형 19247">
+                        <path d="M0 0h18v16H0z" class="cls-4" transform="translate(-11633 4213)"/>
+                        <path d="M1 1h16v14H1z" class="cls-1" transform="translate(-11633 4213)"/>
+                    </g>
+                    <path id="사각형_19248" d="M0 0h18v4H0z" class="cls-3" data-name="사각형 19248" transform="translate(-11633 4213)"/>
+                </g>
+            </g>
+        </g>
+        <path id="사각형_19263" d="M0 0h40v40H0z" class="cls-1" data-name="사각형 19263" transform="translate(1909 155)"/>
+    </g>
+</svg>

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+    <defs>
+        <style>
+            .cls-1{fill:#fff}.cls-2{fill:none}
+        </style>
+    </defs>
+    <g id="그룹_17957" data-name="그룹 17957" transform="translate(-320 -284)">
+        <path id="ic_shopping_basket_24px" d="M23.1 11.942l-5.968-9.325A1.337 1.337 0 0 0 16 2.02a1.317 1.317 0 0 0-1.132.611L8.9 11.942H2.364A1.4 1.4 0 0 0 1 13.364a1.244 1.244 0 0 0 .055.384l3.463 13.177A2.733 2.733 0 0 0 7.136 29h17.728a2.76 2.76 0 0 0 2.636-2.075l3.464-13.177.036-.384a1.4 1.4 0 0 0-1.364-1.421zm-11.2 0L16 5.687l4.091 6.255zM16 23.314a2.845 2.845 0 1 1 2.727-2.843A2.8 2.8 0 0 1 16 23.314z" class="cls-1" transform="translate(320 283.98)"/>
+        <g id="_24" data-name="24" transform="translate(320 284)">
+            <g id="_24-2" data-name="24">
+                <path id="사각형_21" d="M0 0h32v32H0z" class="cls-2" data-name="사각형 21"/>
+            </g>
+        </g>
+    </g>
+</svg>

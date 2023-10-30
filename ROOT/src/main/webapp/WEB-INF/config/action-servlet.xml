@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:p="http://www.springframework.org/schema/p"
+    xmlns:mvc="http://www.springframework.org/schema/mvc"
+    xmlns:task="http://www.springframework.org/schema/task"
+    xmlns:websocket="http://www.springframework.org/schema/websocket"
+	xsi:schemaLocation="http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd
+		http://www.springframework.org/schema/task http://www.springframework.org/schema/task/spring-task-4.0.xsd
+		http://www.springframework.org/schema/websocket http://www.springframework.org/schema/websocket/spring-websocket-4.0.xsd">
+		
+	<context:component-scan base-package="com.pbfw.*"></context:component-scan>
+	<context:property-placeholder location="classpath:properties/*.properties" /> 
+	
+	<task:scheduler id="jobScheduler" pool-size="10"/>
+	<task:annotation-driven scheduler="jobScheduler"/>
+	
+	<mvc:annotation-driven />
+    <mvc:resources location="/resources/" mapping="/resources/**" />
+	
+	<bean id="messageSource" class="org.springframework.context.support.ResourceBundleMessageSource">
+		<property name="basenames" value="locale/messages"/>
+		<property name="defaultEncoding" value="UTF-8" />
+        <property name="cacheSeconds" value="180"/>
+	</bean>
+	
+	<bean id="localeResolver" class="org.springframework.web.servlet.i18n.SessionLocaleResolver">
+		<property name="defaultLocale" value="ko_KR" />
+	</bean>
+	
+	<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver" />
+	
+	<websocket:handlers>
+		<websocket:mapping handler="echoHandler" path="/websocket"/>
+	</websocket:handlers>
+	<bean id="echoHandler" class="com.pbfw.common.schedule.EchoHandler"/>
+	
+	<mvc:interceptors>
+		<mvc:interceptor>
+            <mvc:mapping path="/**"/>
+            <mvc:exclude-mapping path="/resources/**"/>
+            <bean id="loggerInterceptor" class="com.pbfw.common.interceptor.LoggerInterceptor"></bean>
+        </mvc:interceptor>
+        
+         <mvc:interceptor>
+            <mvc:mapping path="/**"/>
+            <mvc:exclude-mapping path="/resources/**"/>
+            <bean id="loginInterceptor" class="com.pbfw.common.interceptor.LoginInterceptor"></bean>
+        </mvc:interceptor>
+        
+		<beans:bean id="webContentInterceptor" class="org.springframework.web.servlet.mvc.WebContentInterceptor">
+			<beans:property name="cacheSeconds" value="0"/>
+			<beans:property name="useExpiresHeader" value="true"/>
+			<beans:property name="useCacheControlHeader" value="true"/>
+			<beans:property name="useCacheControlNoStore" value="true"/>
+			<beans:property name="cacheMappings">
+				<beans:props><beans:prop key="/">86400</beans:prop></beans:props>
+			</beans:property>
+		</beans:bean>
+        
+		<bean id="localeChangeInterceptor" class="org.springframework.web.servlet.i18n.LocaleChangeInterceptor">
+	    	<property name="paramName" value="lang" />
+	    </bean>
+	    
+	    <bean class="org.springframework.mobile.device.DeviceResolverHandlerInterceptor"></bean>
+    </mvc:interceptors>
+    
+    <bean class="org.springframework.web.servlet.view.UrlBasedViewResolver" p:order="1"
+		p:viewClass="org.springframework.web.servlet.view.JstlView"
+        p:prefix="/WEB-INF/jsp/" p:suffix=".jsp">
+    </bean>
+    
+	<!-- Resolves views selected for rendering by @Controllers to .jsp resources in the /WEB-INF/jsp directory -->
+	<bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+		<beans:property name="prefix" value="/WEB-INF/jsp/" />
+		<beans:property name="suffix" value=".jsp" />
+		<beans:property name="order" value="1" />
+	</bean>
+	
+	<bean class="org.springframework.web.servlet.view.BeanNameViewResolver" p:order="0" />
+	<bean id="jsonView" class="org.springframework.web.servlet.view.json.MappingJackson2JsonView" />
+	<bean id="download" class="com.pbfw.common.util.FileDownloadUtil"/>
+	<bean id="multiDownload" class="com.pbfw.common.util.MultiFileDownloadUtil"/>
+</beans>

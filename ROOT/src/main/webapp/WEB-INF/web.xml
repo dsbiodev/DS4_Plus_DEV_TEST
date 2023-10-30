@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns="http://Java.sun.com/xml/ns/javaee"
+	xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+	version="3.0">
+	<welcome-file-list>
+		<welcome-file>index.jsp</welcome-file>
+	</welcome-file-list>
+
+	<context-param>
+		<param-name>contextConfigLocation</param-name>
+		<param-value>classpath*:config/spring/context-*.xml</param-value>
+	</context-param>
+	<listener>
+		<listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+	</listener>
+	
+	<listener>
+    	<listener-class>com.pbfw.common.util.ServerUtils</listener-class>
+	</listener>
+
+	<servlet>
+		<servlet-name>previewRouter</servlet-name>
+		<jsp-file>/WEB-INF/jsp/preview/previewRouter.jsp</jsp-file>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>previewRouter</servlet-name>
+		<url-pattern>/previewRouter</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+		<servlet-name>binso</servlet-name>
+		<jsp-file>/WEB-INF/jsp/preview/binso.jsp</jsp-file>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>binso</servlet-name>
+		<url-pattern>/binso</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+		<servlet-name>jonghap</servlet-name>
+		<jsp-file>/WEB-INF/jsp/preview/jonghap.jsp</jsp-file>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>jonghap</servlet-name>
+		<url-pattern>/jonghap</url-pattern>
+	</servlet-mapping>
+	<servlet>
+		<servlet-name>wait</servlet-name>
+		<jsp-file>/WEB-INF/jsp/preview/wait.jsp</jsp-file>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>wait</servlet-name>
+		<url-pattern>/wait</url-pattern>
+	</servlet-mapping>
+	<servlet>
+		<servlet-name>ibgwan</servlet-name>
+		<jsp-file>/WEB-INF/jsp/preview/ibgwan.jsp</jsp-file>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>ibgwan</servlet-name>
+		<url-pattern>/ibgwan</url-pattern>
+	</servlet-mapping>
+
+	<servlet>
+		<servlet-name>sangga</servlet-name>
+		<jsp-file>/WEB-INF/jsp/preview/sangga.jsp</jsp-file>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>sangga</servlet-name>
+		<url-pattern>/sangga</url-pattern>
+	</servlet-mapping>
+
+	
+	<servlet>
+		<servlet-name>previewlink</servlet-name>
+		<jsp-file>/WEB-INF/jsp/preview/previewlink.jsp</jsp-file>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>previewlink</servlet-name>
+		<url-pattern>/dslink/*</url-pattern>
+	</servlet-mapping>
+	
+	<servlet>
+		<servlet-name>sanggaSYU</servlet-name>
+		<jsp-file>/WEB-INF/jsp/preview/sanggaSYU.jsp</jsp-file>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>sanggaSYU</servlet-name>
+		<url-pattern>/sanggaSYU</url-pattern>
+	</servlet-mapping>
+	
+	
+	<error-page>
+        <error-code>404</error-code>
+        <location>/</location>
+    </error-page>
+	
+	
+	<!-- 	정산 -->
+	<servlet>
+		<servlet-name>paymentSelect</servlet-name>
+		<jsp-file>/WEB-INF/jsp/view/payment-select.jsp</jsp-file>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>paymentSelect</servlet-name>
+		<url-pattern>/paymentSelect</url-pattern>
+	</servlet-mapping>
+	
+	<servlet>
+		<servlet-name>payment</servlet-name>
+		<jsp-file>/WEB-INF/jsp/view/payment.jsp</jsp-file>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>payment</servlet-name>
+		<url-pattern>/payment</url-pattern>
+	</servlet-mapping>
+	
+	<servlet>
+		<servlet-name>paymentFinish</servlet-name>
+		<jsp-file>/WEB-INF/jsp/view/payment-finish.jsp</jsp-file>
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>paymentFinish</servlet-name>
+		<url-pattern>/paymentFinish</url-pattern>
+	</servlet-mapping>
+	
+	
+	
+	<servlet>
+		<servlet-name>action</servlet-name>
+		<servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+		<init-param>
+			<param-name>contextConfigLocation</param-name>
+			<param-value>/WEB-INF/config/*-servlet.xml</param-value>
+		</init-param>
+		<init-param>
+			<param-name>enablePooling</param-name>
+			<param-value>false</param-value>
+		</init-param>
+		<load-on-startup>1</load-on-startup>
+		<async-supported>true</async-supported> <!-- 웹소켓을 위한 설정(비동기지원) -->
+	</servlet>
+	<servlet-mapping>
+		<servlet-name>action</servlet-name>
+		<url-pattern>/</url-pattern>
+	</servlet-mapping>
+
+	<filter>
+		<filter-name>encodingFilter</filter-name>
+		<filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+		<init-param>
+			<param-name>encoding</param-name>
+			<param-value>UTF-8</param-value>
+		</init-param>
+	</filter>
+	<filter-mapping>
+		<filter-name>encodingFilter</filter-name>
+		<url-pattern>*.do</url-pattern>
+	</filter-mapping>
+	<filter>
+		<filter-name>deviceResolverRequestFilter</filter-name>
+		<filter-class>org.springframework.mobile.device.DeviceResolverRequestFilter</filter-class>
+	</filter>
+	<filter-mapping>
+		<filter-name>deviceResolverRequestFilter</filter-name>
+		<url-pattern>/*</url-pattern>
+	</filter-mapping>
+	<session-config>
+		<session-timeout>-1</session-timeout>
+	</session-config>
+
+</web-app>

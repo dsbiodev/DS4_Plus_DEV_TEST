@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+    <defs>
+        <style>
+            .cls-1{fill:none}.cls-2{fill:#fff}
+        </style>
+    </defs>
+    <g id="그룹_13983" data-name="그룹 13983" transform="rotate(-90 12 12)">
+        <path id="Box" d="M0 0h24v24H0z" class="cls-1"/>
+        <path id="Icon_Keyboard_Arrow_-_Up_Dark" d="M10.6 7.4L6 2.8 1.4 7.4 0 6l6-6 6 6z" class="cls-2" data-name="Icon / Keyboard Arrow - Up / Dark" transform="rotate(180 9 7.7)"/>
+    </g>
+</svg>

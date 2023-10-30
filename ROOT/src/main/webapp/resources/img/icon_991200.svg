@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+    <g id="prefix__그룹_25522" data-name="그룹 25522" transform="translate(-.36 -.436)">
+        <path id="prefix__ic_card_giftcard_24px" d="M20.155 6.034h-2.2a3.019 3.019 0 0 0-5.365-2.672l-.5.676-.5-.686a3.02 3.02 0 0 0-5.374 2.682h-2.2A2 2 0 0 0 2.01 8.052L2 19.146a2.01 2.01 0 0 0 2.017 2.017h16.138a2.01 2.01 0 0 0 2.017-2.017V8.052a2.01 2.01 0 0 0-2.017-2.018zm-5.043-2.017A1.009 1.009 0 1 1 14.1 5.026a1.012 1.012 0 0 1 1.012-1.009zm-6.052 0a1.009 1.009 0 1 1-1.008 1.009A1.012 1.012 0 0 1 9.06 4.017zm11.095 15.129H4.017v-2.017h16.138zm0-5.043H4.017V8.052h5.124l-2.1 2.854 1.634 1.18 2.4-3.268 1.009-1.372 1.009 1.372 2.4 3.268 1.634-1.18-2.1-2.854h5.124z" transform="translate(.185 1.229)" style="fill:#fff"/>
+        <g id="prefix___24" data-name="24" transform="translate(.36 .436)">
+            <path id="prefix__사각형_21" d="M0 0H24V24H0z" data-name="사각형 21" style="fill:none"/>
+            <text id="prefix___24-2" data-name="24" transform="translate(6.118 3)" style="font-size:1px;font-family:NotoSansCJKkr-Regular,Noto Sans CJK KR;fill:none">
+                <tspan x="0" y="0">24</tspan>
+            </text>
+        </g>
+    </g>
+</svg>

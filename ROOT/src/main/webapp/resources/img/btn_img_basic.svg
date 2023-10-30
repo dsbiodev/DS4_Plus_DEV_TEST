@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" id="_24px_1_" width="40" height="40" data-name="24px (1)" viewBox="0 0 40 40">
+    <defs>
+        <style>
+            .cls-1{fill:#707070}.cls-2{fill:none}
+        </style>
+    </defs>
+    <path id="패스_52107" d="M29.667 10.333v4.983s-3.317.017-3.333 0v-4.983h-5s.017-3.317 0-3.333h5V2h3.333v5h5v3.333zm-5 6.667v-5h-5V7H6.333A3.343 3.343 0 0 0 3 10.333v20a3.343 3.343 0 0 0 3.333 3.333h20a3.343 3.343 0 0 0 3.333-3.333V17zM6.333 30.333l5-6.667 3.333 5 5-6.667 6.667 8.333z" class="cls-1" data-name="패스 52107" transform="translate(2 1.333)"/>
+    <path id="패스_52108" d="M0 0h40v40H0z" class="cls-2" data-name="패스 52108"/>
+</svg>

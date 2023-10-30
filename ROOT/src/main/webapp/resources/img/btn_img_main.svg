@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="124" height="124" viewBox="0 0 124 124">
+    <defs>
+        <style>
+            .cls-1{fill:none}.cls-2,.cls-3{fill:#888}.cls-2{font-size:16px;font-family:NotoSansKR-Medium,Noto Sans KR Medium;font-weight:500;letter-spacing:.05em}
+        </style>
+    </defs>
+    <g id="그룹_18042" data-name="그룹 18042" transform="translate(-257 -551)">
+        <path id="사각형_38637" d="M0 0h124v124H0z" class="cls-1" data-name="사각형 38637" transform="translate(257 551)"/>
+        <g id="그룹_18041" data-name="그룹 18041" transform="translate(1 -1)">
+            <text id="대표_이미지_16:9" class="cls-2" data-name="대표 이미지 16:9" transform="translate(318 635)">
+                <tspan x="-40.6" y="0">대표 이미지</tspan><tspan x="-17.264" y="20">16:9</tspan>
+            </text>
+            <g id="_24px_1_" data-name="24px (1)" transform="translate(294 568)">
+                <path id="패스_52107" d="M35 12v5.98s-3.98.02-4 0V12h-6s.02-3.98 0-4h6V2h4v6h6v4zm-6 8v-6h-6V8H7a4.012 4.012 0 0 0-4 4v24a4.012 4.012 0 0 0 4 4h24a4.012 4.012 0 0 0 4-4V20zM7 36l6-8 4 6 6-8 8 10z" class="cls-3" data-name="패스 52107" transform="translate(3 2)"/>
+                <path id="패스_52108" d="M0 0h48v48H0z" class="cls-1" data-name="패스 52108"/>
+            </g>
+        </g>
+    </g>
+</svg>

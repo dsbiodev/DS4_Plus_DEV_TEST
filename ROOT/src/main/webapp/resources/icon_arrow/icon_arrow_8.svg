@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+    <defs>
+        <style>
+            .cls-1,.cls-3{fill:none}.cls-2{clip-path:url(#clip-path)}.cls-3{font-size:1px;font-family:NotoSansKR-Regular,Noto Sans KR Regular}
+        </style>
+        <clipPath id="clip-path">
+            <path d="M0 0h32v32H0z" class="cls-1"/>
+        </clipPath>
+    </defs>
+    <g id="그룹_14919" data-name="그룹 14919" transform="translate(.123)">
+        <path id="ic_subdirectory_arrow_right_24px" d="M4 18.681l8.008 8.008 1.9-1.9-4.796-4.773H24.02V4h-2.67v13.346H9.112l4.788-4.778-1.9-1.9z" transform="translate(2.48 .045)"/>
+        <g id="_24" class="cls-2" data-name="24" transform="translate(-.123)">
+            <path id="사각형_21" d="M0 0h32v32H0z" class="cls-1" data-name="사각형 21"/>
+            <text id="_24-2" class="cls-3" data-name="24" transform="translate(8.606 3.657)">
+                <tspan x="0" y="0">24</tspan>
+            </text>
+        </g>
+    </g>
+</svg>

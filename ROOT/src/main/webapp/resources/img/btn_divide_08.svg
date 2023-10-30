@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="156" height="108" viewBox="0 0 156 108">
+  <g id="그룹_18388" data-name="그룹 18388" transform="translate(-755 -1643)">
+    <g id="그룹_18383" data-name="그룹 18383">
+      <text id="_8분할_사이즈_px_954_:_240" data-name="8분할 사이즈(px)
+954 : 240" transform="translate(833 1715)" fill="#888" font-size="16" font-family="NotoSansKR-Medium, Noto Sans KR Medium" font-weight="500"><tspan x="-57.904" y="0">8분할 사이즈(</tspan><tspan y="0">px)</tspan><tspan x="-33.344" y="20">954 : 240</tspan></text>
+      <g id="_24px_1_" data-name="24px (1)" transform="translate(809 1648)">
+        <path id="패스_52107" data-name="패스 52107" d="M35,12v5.98s-3.98.02-4,0V12H25s.02-3.98,0-4h6V2h4V8h6v4Zm-6,8V14H23V8H7a4.012,4.012,0,0,0-4,4V36a4.012,4.012,0,0,0,4,4H31a4.012,4.012,0,0,0,4-4V20ZM7,36l6-8,4,6,6-8,8,10Z" transform="translate(3 2)" fill="#888"/>
+        <path id="패스_52108" data-name="패스 52108" d="M0,0H48V48H0Z" fill="none"/>
+      </g>
+    </g>
+    <rect id="사각형_39530" data-name="사각형 39530" width="156" height="108" transform="translate(755 1643)" fill="none"/>
+  </g>
+</svg>

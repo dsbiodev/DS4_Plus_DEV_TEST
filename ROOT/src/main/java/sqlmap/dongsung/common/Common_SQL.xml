@@ -1,0 +1,341 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.pbfw.common.mapper.CommonMapper">
+	<sql id="selectUserInfoSql">
+		SELECT A.USER_NO, A.FUNERAL_NO, LV,
+			(SELECT KO FROM common_code_tb WHERE TARGET = 'USER_LV' AND VALUE = A.LV) AS LV_NAME,
+			ID, NAME, PHONE, COMPANY_NAME, FUNERAL_NAME, CALCULATE_FLAG, 
+			DEVICE_CODE, ALIVE_FLAG, USER_MENU_NO, 
+		    <!-- (SELECT GROUP_CONCAT(FUNERAL_NO ORDER BY FUNERAL_NO SEPARATOR ',') FROM funeral_info_tb WHERE PHOTO_MANAGER_NO = A.USER_NO GROUP BY PHOTO_MANAGER_NO) AS USER_FUNERAL_NO, -->
+		    CASE
+				WHEN LV = 39
+				THEN (SELECT GROUP_CONCAT(FUNERAL_NO ORDER BY FUNERAL_NO SEPARATOR ',') FROM funeral_info_tb WHERE PHOTO_MANAGER_NO = A.USER_NO GROUP BY PHOTO_MANAGER_NO)
+				WHEN LV = 90
+				THEN (SELECT GROUP_CONCAT(FUNERAL_NO ORDER BY FUNERAL_NO SEPARATOR ',') FROM funeral_info_tb WHERE MANAGER_NO = A.USER_NO GROUP BY MANAGER_NO)
+				ELSE null
+			END AS USER_FUNERAL_NO, USER_ROLE,
+		    A.CREATE_USER_NO, A.UPDATE_USER_NO,
+		    DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d') AS CREATE_DT,
+			DATE_FORMAT(A.UPDATE_DT, '%Y-%m-%d') AS UPDATE_DT    
+		FROM user_tb A 
+		LEFT JOIN funeral_info_tb B ON A.FUNERAL_NO = B.FUNERAL_NO
+		LEFT JOIN 
+			(SELECT USER_NO, GROUP_CONCAT(MENU_NO ORDER BY MENU_NO) AS USER_MENU_NO
+		    FROM user_menu_tb 
+		    GROUP BY USER_NO) C ON A.USER_NO = C.USER_NO 
+		WHERE 1=1 AND LV NOT IN (99, 98)
+		<if test="userNo != null and userNo != ''">
+			AND A.USER_NO = ${userNo}
+		</if>
+		<if test="lv != null and lv != ''">
+			AND LV IN (${lv})
+		</if>
+		<if test="funeralNo != null and funeralNo != ''">
+			AND A.FUNERAL_NO = ${funeralNo}
+		</if>
+		<if test="userId != null and userId != ''">
+			AND ID = #{userId}
+		</if>
+		<if test="userPassword != null and userPassword != ''">
+			AND PASSWORD = PASSWORD(#{userPassword})
+		</if>
+		<if test="name != null and name != ''">
+			AND NAME LIKE CONCAT('%', #{name}, '%')
+		</if>
+		<if test="aliveFlag != null and aliveFlag != ''">
+			AND ALIVE_FLAG = ${aliveFlag}
+		</if>
+		<if test="searchText != null and searchText != ''">
+			AND (ID LIKE CONCAT('%', #{searchText},'%') OR NAME LIKE CONCAT('%', #{searchText},'%') OR FUNERAL_NAME LIKE CONCAT('%', #{searchText},'%'))
+		</if>
+		GROUP BY USER_NO
+		HAVING 1=1
+		<if test="userNo != null and userNo != ''">
+			AND USER_NO = ${userNo}
+		</if>
+	</sql>
+	
+	<select id="selectUserInfoTotalCount" parameterType="hashmap" resultType="string">
+		SELECT COUNT(*) AS total FROM (<include refid="selectUserInfoSql"/>) A
+	</select>
+	
+	<select id="selectUserInfoList" parameterType="hashmap" resultType="hashmap">
+		<include refid="selectUserInfoSql"/>
+		<if test="order != null and order != ''">ORDER BY ${order}</if>
+		<if test="queryPage != null and queryPage != ''">LIMIT ${queryPage}, ${display}</if>
+	</select>
+	
+	<select id="selectLoginUserInfo" parameterType="hashmap" resultType="hashmap">
+		SELECT IF(#{targetUserNo} IS NULL, USER_NO, #{targetUserNo}) AS USER_NO, LV,
+			IF(#{targetFuneralNo} IS NULL, A.FUNERAL_NO, #{targetFuneralNo}) AS FUNERAL_NO,
+			ID<!-- , PASSWORD -->, NAME, PHONE, DEVICE_CODE, ALIVE_FLAG, B.FUNERAL_NAME,
+			IF(LV = 99, (SELECT CALCULATE_FLAG FROM funeral_info_tb WHERE FUNERAL_NO = #{targetFuneralNo}), CALCULATE_FLAG) AS CALCULATE_FLAG,
+		    A.CREATE_USER_NO, A.UPDATE_USER_NO,
+		    DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d') AS CREATE_DT,
+			DATE_FORMAT(A.UPDATE_DT, '%Y-%m-%d') AS UPDATE_DT
+		FROM user_tb A LEFT JOIN funeral_info_tb B ON A.FUNERAL_NO = B.FUNERAL_NO
+		WHERE 1=1 AND ALIVE_FLAG = 1
+		<if test="userNo != null and userNo != ''">
+			AND USER_NO = #{userNo}
+		</if>
+		<if test="userId != null and userId != ''">
+			AND ID = #{userId}
+		</if>
+		<if test="userPassword != null and userPassword != ''">
+			AND PASSWORD = PASSWORD(#{userPassword})
+		</if>
+		<if test="userNo == null and userId == null">	<!-- add by LSH 230710 --> 
+			AND 1=0 
+		</if>
+	</select>
+	
+	<select id="selectRaspberryLoginInfo" parameterType="hashmap" resultType="hashmap">
+		SELECT RASPBERRY_ID, A.FUNERAL_NO, B.FUNERAL_NAME,
+			A.RASPBERRY_CONNECTION_NO, CLASSIFICATION,
+		    (SELECT KO FROM common_code_tb WHERE VALUE = C.CLASSIFICATION AND TARGET = 'RASPBERRY_CONNECTION_CLASSIFICATION') AS CLASSIFICATION_NAME,
+		    CALCULATE_FLAG, APPELLATION, BUILDING_NAME, FLOOR, AREA_SIZE, MEMO, 
+		    A.DEVICE_CODE, A.CREATE_USER_NO, A.UPDATE_USER_NO,
+		    DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d') AS CREATE_DT,
+			DATE_FORMAT(A.UPDATE_DT, '%Y-%m-%d') AS UPDATE_DT, FUNERAL_FLAG
+		FROM raspberry_tb A LEFT JOIN funeral_info_tb B ON A.FUNERAL_NO = B.FUNERAL_NO
+		LEFT JOIN raspberry_connection_tb C ON A.RASPBERRY_CONNECTION_NO = C.RASPBERRY_CONNECTION_NO
+		WHERE RASPBERRY_ID = #{raspberryId}
+	</select>
+	
+	<select id="selectPythonLoginInfo" parameterType="hashmap" resultType="hashmap">
+		SELECT RASPBERRY_ID, A.FUNERAL_NO, B.FUNERAL_NAME,
+			A.RASPBERRY_CONNECTION_NO, CLASSIFICATION,
+		    (SELECT KO FROM common_code_tb WHERE VALUE = C.CLASSIFICATION AND TARGET = 'RASPBERRY_CONNECTION_CLASSIFICATION') AS CLASSIFICATION_NAME,
+		    CALCULATE_FLAG, APPELLATION, BUILDING_NAME, FLOOR, AREA_SIZE, MEMO, 
+		    A.DEVICE_CODE, A.CREATE_USER_NO, A.UPDATE_USER_NO,
+		    DATE_FORMAT(A.CREATE_DT, '%Y-%m-%d') AS CREATE_DT,
+			DATE_FORMAT(A.UPDATE_DT, '%Y-%m-%d') AS UPDATE_DT, FUNERAL_FLAG, PYTHON_FLAG
+		FROM raspberry_tb A LEFT JOIN funeral_info_tb B ON A.FUNERAL_NO = B.FUNERAL_NO
+		LEFT JOIN raspberry_connection_tb C ON A.RASPBERRY_CONNECTION_NO = C.RASPBERRY_CONNECTION_NO
+		WHERE RASPBERRY_ID = #{pythonId}
+	</select>
+	
+	<update id="updaterRaspberryOverlapInit" parameterType="hashmap">
+		UPDATE raspberry_tb
+		SET DEVICE_CODE = null
+		WHERE DEVICE_CODE = #{deviceCode}
+	</update>
+	
+	<update id="updaterPythonIp" parameterType="hashmap">
+		UPDATE raspberry_tb
+		SET PRIVATE_IP = #{pythonIp}
+		, AUTORIZED_IP = #{pythonAutoIp}
+		, MAC_ADDRESS = #{macAddress}
+		, PYTHON_FLAG = 2
+		, DEVICE_CODE = 'pythonConnectionSucc'
+		, LAST_LOGIN_DT = NOW()
+		WHERE RASPBERRY_ID = #{pythonId}
+	</update>
+	
+	<update id="updaterRaspberryDeviceCode" parameterType="hashmap">
+		UPDATE raspberry_tb
+		SET DEVICE_CODE = #{deviceCode}
+		WHERE RASPBERRY_ID = #{raspberryId}
+	</update>
+	
+	<select id="selectAllMenu" parameterType="hashmap" resultType="hashmap">
+		SELECT A.MENU_NO, STEP, LV, KO, LINK
+		FROM menu_tb A LEFT JOIN user_menu_tb B ON A.MENU_NO = B.MENU_NO
+		WHERE 1=1
+		AND LV IN(${lv})
+		<if test="lv != '39' and lv != '99' and userNo != null and userNo != ''">
+			AND (USER_NO = ${userNo} OR RIGHT(A.MENU_NO, 2) = '00'
+			<if test="funeralNo != null and funeralNo != ''">
+				OR USER_NO = (SELECT MAX(USER_NO) FROM user_tb WHERE FUNERAL_NO = ${funeralNo} AND LV = 29)
+			</if>
+			)
+		</if>
+		<if test="sy == 'true'">
+			AND A.MENU_NO NOT IN(290101, 290102)
+		</if>
+		<if test="dgd == 'true'">
+			AND A.MENU_NO NOT IN(290101, 290102)
+		</if>
+		<if test="funeralNo != null and funeralNo != ''">
+			AND (RIGHT(A.MENU_NO, 2) = '00' OR USER_NO = (SELECT MAX(USER_NO) FROM user_tb WHERE FUNERAL_NO = ${funeralNo} AND LV = 29))
+		</if>
+		GROUP BY A.MENU_NO
+		ORDER BY MENU_NO ASC
+	</select>
+	
+	<select id="overlapChecked" parameterType="hashmap" resultType="boolean">
+		SELECT IF(COUNT(USER_NO) > 0, FALSE, TRUE) AS RESULT FROM user_tb WHERE ID = #{userId}
+	</select>
+	
+	<select id="selectCommonCode" parameterType="hashmap" resultType="hashmap">
+		SELECT TARGET, VALUE, KO
+		FROM common_code_tb 
+		WHERE 1=1
+		<if test="target != null and target != ''">AND TARGET = #{target}</if>
+		<if test="order != null and order != ''">ORDER BY ${order}</if>
+	</select>
+	
+	<select id="selectCityCode" parameterType="hashmap" resultType="hashmap">
+		SELECT CODE, NAME, LV1, LV2, LV3 
+		FROM city_code_tb
+		WHERE 1=1 AND LV = ${lv}
+		<if test="code != null and code != ''">AND CODE LIKE CONCAT(LEFT(${code}, 2), '%')</if>
+		<if test="order != null and order != ''">ORDER BY ${order}</if>
+	</select>
+	
+	<insert id="insertUser" parameterType="hashmap" useGeneratedKeys="true" keyProperty="USER_NO">
+		INSERT INTO user_tb(FUNERAL_NO, LV, ID, PASSWORD, NAME, PHONE, COMPANY_NAME, USER_ROLE, ALIVE_FLAG, CREATE_USER_NO)
+		VALUES(#{funeralNo}, #{lv}, #{id}, PASSWORD(#{password}), #{name}, REPLACE(#{phone}, '-', ''), #{companyName}, #{userRole}, ${aliveFlag}, #{actionUserNo});
+	</insert>
+
+	<update id="updateUser" parameterType="hashmap">
+		UPDATE user_tb
+		SET USER_NO = USER_NO,
+			<if test="id != null and id != ''">ID = #{id},</if>
+			<if test="password != null and password != ''">PASSWORD = PASSWORD(#{password}),</if>
+			LV = #{lv}, NAME = #{name},			
+			PHONE = REPLACE(#{phone}, '-', ''),
+			<if test="companyName != null and companyName != ''">COMPANY_NAME = #{companyName},</if>
+			<if test="userRole != null and userRole != ''">USER_ROLE = #{userRole},</if>
+			ALIVE_FLAG = ${aliveFlag}, UPDATE_DT = NOW(), UPDATE_USER_NO = ${actionUserNo}
+		WHERE USER_NO = ${userNo}
+	</update>
+	
+	<delete id="deleteUser" parameterType="hashmap">
+		
+	</delete>
+	
+	<update id="updateLoginToken" parameterType="hashmap">
+		
+	</update>
+	
+	<update id="updateLogoutToken" parameterType="hashmap">
+		
+	</update>
+	
+	<!-- images_tb:S -->
+	<insert id="insertImages" parameterType="hashmap">
+		INSERT INTO images_tb(CATEGORY, WRITING_NO, IMAGE_PATH)
+		VALUES
+			<foreach collection="fileList" item="item" index="index" separator=",">
+				(${category}, ${writingNo}, #{item.fileFullPath})
+			</foreach>
+	</insert>
+	
+	<delete id="deleteImages" parameterType="hashmap">
+		DELETE FROM images_tb
+		WHERE 1=1
+		<if test="imagesNo == null or imagesNo == ''">
+			AND CATEGORY = ${category} AND WRITING_NO = ${writingNo}
+		</if>
+		<if test="imagesNo != null and imagesNo != ''">
+			AND IMAGES_NO = ${imagesNo}
+		</if>
+		<if test="deleteList != null and deleteList != ''">
+			AND IMAGES_NO IN (${deleteList});
+		</if>
+		<if test="doNotDelete != null and doNotDelete != ''">
+			AND IMAGES_NO NOT IN (${doNotDelete})
+		</if>
+	</delete>
+	<!-- images_tb:E -->
+	
+	
+	
+	<insert id="createLog" parameterType="hashmap">
+		INSERT INTO log_tb(USER_NO, DIVISION, ACTION_CODE, DATA_STRING, IP)
+		VALUES(${logUserNo}, #{logDivision}, #{logActionCode}, #{dataString}, #{logIp})
+	</insert>
+	
+	
+	<select id="selectEventSche10" parameterType="hashmap" resultType="hashmap">
+		SELECT A.EVENT_NO, A.ENTRANCE_ROOM_DT, group_concat(B.RASPBERRY_CONNECTION_NO) AS BINSO_LIST
+		FROM event_tb A LEFT JOIN event_raspberry_connection B ON A.EVENT_NO = B.EVENT_NO
+        LEFT JOIN raspberry_connection_tb C ON B.RASPBERRY_CONNECTION_NO = C.RASPBERRY_CONNECTION_NO
+		WHERE DATE_FORMAT(A.ENTRANCE_ROOM_DT, '%Y-%m-%d %H:%i') = DATE_FORMAT(now(), '%Y-%m-%d %H:%i')
+		AND A.EVENT_ALIVE_FLAG = 1
+		AND B.RASPBERRY_CONNECTION_NO IS NOT NULL
+		AND C.FLAG = 1
+		GROUP BY A.EVENT_NO
+	</select>
+	
+	
+	<select id="selectEventSche30" parameterType="hashmap" resultType="hashmap">
+		select group_concat(A.RASPBERRY_CONNECTION_NO) AS BINSO_LIST
+		FROM(
+			SELECT A.RASPBERRY_CONNECTION_NO 
+			FROM raspberry_status_plate A LEFT JOIN status_plate_binso B ON A.STATUS_PLATE_NO = B.STATUS_PLATE_NO
+			LEFT JOIN raspberry_connection_tb C ON A.RASPBERRY_CONNECTION_NO = C.RASPBERRY_CONNECTION_NO
+			WHERE B.BINSO_NO IN(${binsoList})
+			AND C.RASPBERRY_CONNECTION_NO IS NOT NULL
+			AND C.FLAG = 1
+			GROUP BY A.RASPBERRY_CONNECTION_NO
+			) A
+	</select>
+	
+	
+	
+	<select id="selectRaspEventSche" parameterType="hashmap" resultType="hashmap">
+		SELECT B.RASPBERRY_CONNECTION_NO
+		<if test="flag != null and flag != ''">, #{flag} AS FLAG</if>
+		FROM event_tb A LEFT JOIN event_raspberry_connection B ON A.EVENT_NO = B.EVENT_NO
+        LEFT JOIN raspberry_connection_tb C ON B.RASPBERRY_CONNECTION_NO = C.RASPBERRY_CONNECTION_NO
+<!-- 		WHERE DATE_FORMAT(A.ENTRANCE_ROOM_DT, '%Y-%m-%d %H:%i') BETWEEN DATE_FORMAT(DATE_ADD(NOW(), INTERVAL -59 SECOND), '%Y-%m-%d %H:%i') AND DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') -->
+		WHERE DATE_FORMAT(A.ENTRANCE_ROOM_DT, '%Y-%m-%d %H:%i') = DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i')
+		AND B.RASPBERRY_CONNECTION_NO IS NOT NULL
+        AND A.EVENT_ALIVE_FLAG = 1
+        AND A.CHOOMO_FLAG = 0
+        AND C.FLAG = 1
+		UNION ALL
+		SELECT A.RASPBERRY_CONNECTION_NO
+		<if test="flag != null and flag != ''">, #{flag} AS FLAG</if>
+		FROM raspberry_status_plate A LEFT JOIN status_plate_binso B ON A.STATUS_PLATE_NO = B.STATUS_PLATE_NO
+		LEFT JOIN raspberry_tb C ON A.RASPBERRY_CONNECTION_NO = C.RASPBERRY_CONNECTION_NO 
+        LEFT JOIN raspberry_connection_tb D ON C.RASPBERRY_CONNECTION_NO = D.RASPBERRY_CONNECTION_NO
+		WHERE B.BINSO_NO IN(SELECT B.RASPBERRY_CONNECTION_NO
+							FROM event_tb A LEFT JOIN event_raspberry_connection B ON A.EVENT_NO = B.EVENT_NO
+<!-- 							WHERE DATE_FORMAT(A.ENTRANCE_ROOM_DT, '%Y-%m-%d %H:%i') BETWEEN DATE_FORMAT(DATE_ADD(NOW(), INTERVAL -59 SECOND), '%Y-%m-%d %H:%i') AND DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') -->
+							WHERE DATE_FORMAT(A.ENTRANCE_ROOM_DT, '%Y-%m-%d %H:%i') = DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i')
+        					AND A.EVENT_ALIVE_FLAG = 1
+        					AND A.CHOOMO_FLAG = 0)
+        AND D.FLAG = 1
+		GROUP BY A.RASPBERRY_CONNECTION_NO
+		UNION ALL
+		SELECT A.ENTRANCE_ROOM_NO AS RASBERRY_CONNECTION_NO
+		<if test="flag != null and flag != ''">, #{flag} AS FLAG</if>
+		FROM event_tb A LEFT JOIN raspberry_connection_tb B ON A.ENTRANCE_ROOM_NO = B.RASPBERRY_CONNECTION_NO
+<!-- 		WHERE DATE_FORMAT(A.ENTRANCE_ROOM_START_DT, '%Y-%m-%d %H:%i') BETWEEN DATE_FORMAT(DATE_ADD(NOW(), INTERVAL -59 SECOND), '%Y-%m-%d %H:%i') AND DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') -->
+		WHERE DATE_FORMAT(A.ENTRANCE_ROOM_START_DT, '%Y-%m-%d %H:%i') = DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i')
+        AND A.EVENT_ALIVE_FLAG = 1
+        AND A.CHOOMO_FLAG = 0
+        AND B.FLAG = 1
+		UNION ALL
+		SELECT A.RASPBERRY_CONNECTION_NO
+		<if test="flag != null and flag != ''">, #{flag} AS FLAG</if>
+		FROM raspberry_tb A LEFT JOIN raspberry_connection_tb B ON A.RASPBERRY_CONNECTION_NO = B.RASPBERRY_CONNECTION_NO
+		WHERE A.BINSO_RASPBERRY_CONNECTION_NO IN(SELECT RASPBERRY_CONNECTION_NO
+												FROM event_tb AA LEFT JOIN event_raspberry_connection BB ON AA.EVENT_NO = BB.EVENT_NO
+<!-- 												WHERE DATE_FORMAT(AA.ENTRANCE_ROOM_DT, '%Y-%m-%d %H:%i') BETWEEN DATE_FORMAT(DATE_ADD(NOW(), INTERVAL -59 SECOND), '%Y-%m-%d %H:%i') AND DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') -->
+												WHERE DATE_FORMAT(AA.ENTRANCE_ROOM_DT, '%Y-%m-%d %H:%i') = DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i')
+												AND AA.EVENT_ALIVE_FLAG = 1
+        										AND AA.CHOOMO_FLAG = 0)
+        AND B.FLAG = 1
+		GROUP BY RASPBERRY_CONNECTION_NO
+        UNION ALL
+        SELECT A.RASPBERRY_CONNECTION_NO
+		<if test="flag != null and flag != ''">, #{flag} AS FLAG</if>
+		FROM raspberry_tb A LEFT JOIN raspberry_connection_tb B ON A.RASPBERRY_CONNECTION_NO = B.RASPBERRY_CONNECTION_NO
+		LEFT JOIN event_tb C ON A.FUNERAL_NO = C.FUNERAL_NO
+		WHERE B.CLASSIFICATION = 60
+		AND C.EVENT_ALIVE_FLAG = 1
+		AND C.CHOOMO_FLAG = 0
+		AND B.FLAG = 1
+<!-- 		AND DATE_FORMAT(C.ENTRANCE_ROOM_DT, '%Y-%m-%d %H:%i') BETWEEN DATE_FORMAT(DATE_ADD(NOW(), INTERVAL -59 SECOND), '%Y-%m-%d %H:%i') AND DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i') -->
+		AND DATE_FORMAT(C.ENTRANCE_ROOM_DT, '%Y-%m-%d %H:%i') = DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i')
+		GROUP BY A.RASPBERRY_CONNECTION_NO
+		HAVING COUNT(C.EVENT_NO) > 0
+	</select>
+	
+	
+</mapper>

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+    <defs>
+        <style>
+            .cls-1{fill:#5db75b}.cls-2,.cls-3{fill:none}.cls-3{font-size:14px;font-family:NotoSansKR-Regular,Noto Sans KR Regular}
+        </style>
+    </defs>
+    <g id="그룹_17078" data-name="그룹 17078" transform="translate(-1064 -480)">
+        <path id="ic_indeterminate_check_box_24px" d="M19 3H5a2.006 2.006 0 0 0-2 2v14a2.006 2.006 0 0 0 2 2h14a2.006 2.006 0 0 0 2-2V5a2.006 2.006 0 0 0-2-2zm-2 10H7v-2h10z" class="cls-1" transform="translate(1064 480)"/>
+        <g id="_24" data-name="24" transform="translate(1064 480)">
+            <g id="_24-2" data-name="24">
+                <path id="사각형_21" d="M0 0h24v24H0z" class="cls-2" data-name="사각형 21"/>
+            </g>
+            <text id="_24-3" class="cls-3" data-name="24" transform="translate(4 18)">
+                <tspan x="0" y="0">24</tspan>
+            </text>
+        </g>
+    </g>
+</svg>

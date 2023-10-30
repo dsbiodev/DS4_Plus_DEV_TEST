@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+    <defs>
+        <style>
+            .cls-1,.cls-4{fill:none}.cls-2{fill:#fff}.cls-3{clip-path:url(#clip-path)}.cls-4{font-size:1px;font-family:NotoSansKR-Regular,Noto Sans KR Regular}
+        </style>
+        <clipPath id="clip-path">
+            <path d="M0 0h24v24H0z" class="cls-1"/>
+        </clipPath>
+    </defs>
+    <g id="그룹_13807" data-name="그룹 13807" transform="translate(-1775 -658)">
+        <path id="ic_perm_contact_calendar_24px" d="M19 3h-1V1h-2v2H8V1H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2.006 2.006 0 0 0 2-2V5a2.006 2.006 0 0 0-2-2zm-7 3a3 3 0 1 1-3 3 3 3 0 0 1 3-3zm6 12H6v-1c0-2 4-3.1 6-3.1s6 1.1 6 3.1z" class="cls-2" transform="translate(1775 659)"/>
+        <g id="_24" class="cls-3" data-name="24" transform="translate(1775 658)">
+            <path id="사각형_21" d="M0 0h24v24H0z" class="cls-1" data-name="사각형 21"/>
+            <text id="_24-2" class="cls-4" data-name="24" transform="translate(4 3)">
+                <tspan x="0" y="0">24</tspan>
+            </text>
+        </g>
+    </g>
+</svg>

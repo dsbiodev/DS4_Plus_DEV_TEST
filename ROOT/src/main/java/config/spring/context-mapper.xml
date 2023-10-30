@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:context="http://www.springframework.org/schema/context"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+ 
+    <bean id="sqlSessionFactory" class="com.pbfw.common.util.RefreshableSqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource" />
+        <property name="mapperLocations" value="classpath:/sqlmap/dongsung/**/*_SQL.xml" />
+        <property name="configLocation" value="classpath:/sqlmap/mybatis-config.xml" />
+    </bean>
+    
+    <bean id="sqlSessionTemplate" class="org.mybatis.spring.SqlSessionTemplate">
+        <constructor-arg ref="sqlSessionFactory"/>
+    </bean>
+    
+    <bean id="sqlMapperDS" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com.pbfw.admin.mapper" />
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />
+	</bean>
+	
+    <bean id="sqlMapperDS2" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com.pbfw.admin_sec.mapper" />
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />
+	</bean>
+	
+    <bean id="sqlMapperDS3" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com.pbfw.common.mapper" />
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactory" />
+	</bean>
+	
+	
+	<!-- 추모 JDBC 드라이버  -->
+	
+	<bean id="sqlSessionFactoryCM" class="com.pbfw.common.util.RefreshableSqlSessionFactoryBean">
+        <property name="dataSource" ref="dataSource2" />
+        <property name="mapperLocations" value="classpath:/sqlmap/choomo/*_SQL.xml" />
+        <property name="configLocation" value="classpath:/sqlmap/mybatis-config.xml" />
+    </bean>
+    
+    <bean id="sqlSessionTemplate2" class="org.mybatis.spring.SqlSessionTemplate">
+        <constructor-arg ref="sqlSessionFactoryCM"/>
+    </bean>
+    
+    <bean id="sqlMapper2" class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="basePackage" value="com.pbfw.choomo.mapper" />
+		<property name="sqlSessionFactoryBeanName" value="sqlSessionFactoryCM" />
+	</bean>
+	
+	
+	
+</beans>

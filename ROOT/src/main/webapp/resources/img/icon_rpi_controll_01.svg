@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">
+    <defs>
+        <style>
+            .cls-1,.cls-3{fill:#157ffb}.cls-1{stroke:#157ffb}.cls-2,.cls-4{fill:none}.cls-4{font-size:14px;font-family:NotoSansKR-Regular,Noto Sans KR Regular}
+        </style>
+    </defs>
+    <g id="그룹_14320" data-name="그룹 14320" transform="translate(-1031 -489)">
+        <g id="그룹_7056" data-name="그룹 7056" transform="rotate(45 813.95 308.774)">
+            <path id="ic_autorenew_24px" d="M14 7.25V11l5-5-5-5v3.75a9.982 9.982 0 0 0-8.45 15.325l1.825-1.825a7.338 7.338 0 0 1-.875-3.5 7.506 7.506 0 0 1 7.5-7.5zm8.45 2.175l-1.825 1.825a7.488 7.488 0 0 1-6.625 11V18.5l-5 5 5 5v-3.75a9.982 9.982 0 0 0 8.45-15.325z" class="cls-1" transform="translate(1142 272.25)"/>
+            <path id="사각형_13983" d="M0 0h30v30H0z" class="cls-2" data-name="사각형 13983" transform="translate(1141 272)"/>
+        </g>
+        <g id="그룹_14319" data-name="그룹 14319" transform="translate(-202 -122)">
+            <path id="ic_video_label_24px" d="M67.667 63h-60A6.686 6.686 0 0 1 1 56.333V9.667A6.686 6.686 0 0 1 7.667 3h60a6.686 6.686 0 0 1 6.667 6.667v46.666A6.686 6.686 0 0 1 67.667 63zm0-43.333h-60v36.666h60z" class="cls-3" transform="translate(1235.333 618)"/>
+            <g id="_24" data-name="24" transform="translate(1233 611)">
+                <path id="사각형_21" d="M0 0h80v80H0z" class="cls-2" data-name="사각형 21"/>
+                <text id="_24-2" class="cls-4" data-name="24" transform="translate(32 18)">
+                    <tspan x="0" y="0">24</tspan>
+                </text>
+            </g>
+        </g>
+    </g>
+</svg>

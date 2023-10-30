@@ -1,0 +1,60 @@
+[16:52:02] INFO <0001> Start NicePay ( VERSION : ver_nicepayJL_nicepay-lite-0.9.24_20190102 ) 
+[16:52:02] INFO <0001> GENERATE TID : nicepay00m01012012231652022340
+[16:52:02]DEBUG type : PY0  paymethod : CARD
+[16:52:02] INFO <0001> 전문 type :: 승인 요청
+[16:52:02] INFO https://web.nicepay.co.kr/lite/payProcess.jsp
+[16:52:02] INFO <0001> 파라메터 체크 :: 정상
+[16:52:02] INFO <0001> 전문 생성 :: 정상
+[16:52:04] INFO <0001> PGWEB 통신 :: 정상
+[16:52:04] INFO <0001> 수신 전문 처리 :: 정상
+[16:52:04] INFO <0001> TID : nicepay00m01012012231652022340
+[16:52:04] INFO <0001> RESULT : [3001] 카드 결제 성공
+[16:52:04] INFO <0001> End NicePay
+[16:59:37] INFO <0001> Start NicePay ( VERSION : ver_nicepayJL_nicepay-lite-0.9.24_20190102 ) 
+[16:59:37] INFO <0001> GENERATE TID : nicepay00m01012012231659377790
+[16:59:37]DEBUG type : PY0  paymethod : CARD
+[16:59:37] INFO <0001> 전문 type :: 승인 요청
+[16:59:37] INFO https://web.nicepay.co.kr/lite/payProcess.jsp
+[16:59:37] INFO <0001> 파라메터 체크 :: 정상
+[16:59:37] INFO <0001> 전문 생성 :: 정상
+[16:59:38] INFO <0001> PGWEB 통신 :: 정상
+[16:59:38] INFO <0001> 수신 전문 처리 :: 정상
+[16:59:38] INFO <0001> TID : nicepay00m01012012231659377790
+[16:59:38] INFO <0001> RESULT : [3001] 카드 결제 성공
+[16:59:38] INFO <0001> End NicePay
+[17:01:13] INFO <0001> Start NicePay ( VERSION : ver_nicepayJL_nicepay-lite-0.9.24_20190102 ) 
+[17:01:13] INFO <0001> GENERATE TID : nicepay00m01012012231701138010
+[17:01:13]DEBUG type : PY0  paymethod : CARD
+[17:01:13] INFO <0001> 전문 type :: 승인 요청
+[17:01:13] INFO https://web.nicepay.co.kr/lite/payProcess.jsp
+[17:01:13] INFO <0001> 파라메터 체크 :: 정상
+[17:01:13] INFO <0001> 전문 생성 :: 정상
+[17:01:14] INFO <0001> PGWEB 통신 :: 정상
+[17:01:14] INFO <0001> 수신 전문 처리 :: 정상
+[17:01:14] INFO <0001> TID : nicepay00m01012012231701138010
+[17:01:14] INFO <0001> RESULT : [3001] 카드 결제 성공
+[17:01:14] INFO <0001> End NicePay
+[17:02:37] INFO <0002> Start NicePay ( VERSION : ver_nicepayJL_nicepay-lite-0.9.24_20190102 ) 
+[17:02:37] INFO <0002> GENERATE TID : nicepay00m01012012231702373669
+[17:02:37]DEBUG type : PY0  paymethod : CARD
+[17:02:37] INFO <0002> 전문 type :: 승인 요청
+[17:02:37] INFO https://web.nicepay.co.kr/lite/payProcess.jsp
+[17:02:37] INFO <0002> 파라메터 체크 :: 정상
+[17:02:37] INFO <0002> 전문 생성 :: 정상
+[17:02:38] INFO <0002> PGWEB 통신 :: 정상
+[17:02:38] INFO <0002> 수신 전문 처리 :: 정상
+[17:02:38] INFO <0002> TID : nicepay00m01012012231702373669
+[17:02:38] INFO <0002> RESULT : [3001] 카드 결제 성공
+[17:02:38] INFO <0002> End NicePay
+[17:32:15] INFO <0001> Start NicePay ( VERSION : ver_nicepayJL_nicepay-lite-0.9.24_20190102 ) 
+[17:32:15] INFO <0001> GENERATE TID : nicepay00m01012012231732152660
+[17:32:15]DEBUG type : PY0  paymethod : CARD
+[17:32:15] INFO <0001> 전문 type :: 승인 요청
+[17:32:15] INFO https://web.nicepay.co.kr/lite/payProcess.jsp
+[17:32:15] INFO <0001> 파라메터 체크 :: 정상
+[17:32:15] INFO <0001> 전문 생성 :: 정상
+[17:32:17] INFO <0001> PGWEB 통신 :: 정상
+[17:32:17] INFO <0001> 수신 전문 처리 :: 정상
+[17:32:17] INFO <0001> TID : nicepay00m01012012231732152660
+[17:32:17] INFO <0001> RESULT : [3001] 카드 결제 성공
+[17:32:17] INFO <0001> End NicePay

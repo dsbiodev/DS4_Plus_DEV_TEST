@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">
+    <defs>
+        <style>
+            .cls-1{fill:#157ffb}.cls-2,.cls-3,.cls-4{fill:none}.cls-3,.cls-4{font-size:1px;font-family:NotoSansKR-Regular,Noto Sans KR Regular}.cls-4{font-size:14px}
+        </style>
+    </defs>
+    <g id="그룹_14323" data-name="그룹 14323" transform="translate(-1464 -552)">
+        <g id="그룹_14318" data-name="그룹 14318" transform="translate(1470.667 558.667)">
+            <path id="ic_settings_remote_24px" d="M34.164 25H17.5a2.786 2.786 0 0 0-2.778 2.778v33.333a2.786 2.786 0 0 0 2.778 2.778h16.664a2.786 2.786 0 0 0 2.778-2.778V27.778A2.786 2.786 0 0 0 34.164 25zm-8.333 16.667a5.556 5.556 0 1 1 5.556-5.556 5.572 5.572 0 0 1-5.556 5.556zm-13.75-24.861L16 20.722a13.949 13.949 0 0 1 19.667 0l3.917-3.917a19.448 19.448 0 0 0-27.5 0zM25.831 0A30.46 30.46 0 0 0 4.22 8.944l3.917 3.917a25.014 25.014 0 0 1 35.361.028l3.917-3.917A30.255 30.255 0 0 0 25.831 0z" class="cls-1" transform="translate(6.891 2.778)"/>
+            <g id="_24" data-name="24">
+                <path id="사각형_21" d="M0 0h66.667v66.667H0z" class="cls-2" data-name="사각형 21"/>
+                <text id="_24-2" class="cls-3" data-name="24" transform="translate(11.42 3)">
+                    <tspan x="0" y="0">24</tspan>
+                </text>
+            </g>
+        </g>
+        <g id="_24-3" data-name="24" transform="translate(1464 552)">
+            <path id="사각형_21-2" d="M0 0h80v80H0z" class="cls-2" data-name="사각형 21"/>
+            <text id="_24-4" class="cls-4" data-name="24" transform="translate(32 18)">
+                <tspan x="0" y="0">24</tspan>
+            </text>
+        </g>
+    </g>
+</svg>

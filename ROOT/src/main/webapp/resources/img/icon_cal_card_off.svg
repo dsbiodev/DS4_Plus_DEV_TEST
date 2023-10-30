@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="208" height="240" viewBox="0 0 208 240">
+    <defs>
+        <style>
+            .cls-1{fill:#fff;stroke:#707070}.cls-2{fill:#707070;font-size:40px;font-family:NotoSansKR-Medium,Noto Sans KR Medium;font-weight:500;letter-spacing:.05em}.cls-3{fill:#747474}.cls-4{fill:#1bc7f0}.cls-5{fill:#5a5a5a}.cls-6{fill:#f9eab0}.cls-7{fill:#db2215}.cls-8{fill:#245ea9}.cls-9{stroke:none}.cls-10{fill:none}
+        </style>
+    </defs>
+    <g id="그룹_18316" data-name="그룹 18316" transform="translate(-990 -754)">
+        <g id="사각형_39435" class="cls-1" data-name="사각형 39435" transform="translate(990 754)">
+            <rect width="208" height="240" class="cls-9" rx="2"/>
+            <rect width="207" height="239" x=".5" y=".5" class="cls-10" rx="1.5"/>
+        </g>
+        <text id="카드" class="cls-2" transform="translate(1056 968)">
+            <tspan x="0" y="0">카드</tspan>
+        </text>
+        <path id="Selection_Control_Radio_Off_Enabled" d="M21-328a16.006 16.006 0 0 0-16 16 16.006 16.006 0 0 0 16 16 16.006 16.006 0 0 0 16-16 16.006 16.006 0 0 0-16-16zm0 28.8A12.8 12.8 0 0 1 8.2-312 12.8 12.8 0 0 1 21-324.8 12.8 12.8 0 0 1 33.8-312 12.8 12.8 0 0 1 21-299.2z" class="cls-3" data-name="Selection Control / Radio / Off / Enabled" transform="translate(1073 1112)"/>
+        <g id="XMLID_69_" transform="translate(1053 836)">
+            <path id="XMLID_115_" d="M78.261 68H4.6A4.6 4.6 0 0 1 0 63.4V12.6A4.6 4.6 0 0 1 4.6 8h73.661a4.6 4.6 0 0 1 4.6 4.6v50.8a4.6 4.6 0 0 1-4.6 4.6" class="cls-4"/>
+            <path id="XMLID_114_" d="M0 0h82.857v11.429H0z" class="cls-5" transform="translate(0 15.143)"/>
+            <path id="XMLID_113_" d="M19.286 28.857H6.429a1.429 1.429 0 0 1 0-2.857h12.857a1.429 1.429 0 0 1 0 2.857" class="cls-6" transform="translate(2.143 7.714)"/>
+            <path id="XMLID_112_" d="M32.286 28.857H19.429a1.429 1.429 0 1 1 0-2.857h12.857a1.429 1.429 0 0 1 0 2.857" class="cls-6" transform="translate(7.714 7.714)"/>
+            <path id="XMLID_111_" d="M7.857 33.857H6.429a1.429 1.429 0 0 1 0-2.857h1.428a1.429 1.429 0 0 1 0 2.857" class="cls-6" transform="translate(2.143 9.857)"/>
+            <path id="XMLID_110_" d="M14.286 33.857h-2.857a1.429 1.429 0 0 1 0-2.857h2.857a1.429 1.429 0 1 1 0 2.857" class="cls-6" transform="translate(4.286 9.857)"/>
+            <path id="XMLID_109_" d="M18.857 33.857h-1.428a1.429 1.429 0 1 1 0-2.857h1.429a1.429 1.429 0 1 1 0 2.857" class="cls-6" transform="translate(6.857 9.857)"/>
+            <path id="XMLID_108_" d="M25.286 33.857h-2.857a1.429 1.429 0 0 1 0-2.857h2.857a1.429 1.429 0 1 1 0 2.857" class="cls-6" transform="translate(9 9.857)"/>
+            <path id="XMLID_107_" d="M28.429 33.852a1.5 1.5 0 0 1-1.014-.414A1.475 1.475 0 0 1 27 32.423a1.434 1.434 0 1 1 1.429 1.429" class="cls-6" transform="translate(11.571 9.862)"/>
+            <path id="XMLID_106_" d="M51.143 41.571A8.571 8.571 0 1 1 42.571 33a8.571 8.571 0 0 1 8.571 8.571" class="cls-7" transform="translate(14.571 10.714)"/>
+            <path id="XMLID_105_" d="M58.143 41.571A8.571 8.571 0 1 1 49.571 33a8.571 8.571 0 0 1 8.571 8.571" class="cls-8" transform="translate(17.571 10.714)"/>
+        </g>
+    </g>
+</svg>

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">
+    <defs>
+        <style>
+            .cls-1{fill:#157ffb}.cls-2,.cls-3{fill:none}.cls-3{font-size:14px;font-family:NotoSansKR-Regular,Noto Sans KR Regular}
+        </style>
+    </defs>
+    <g id="그룹_14325" data-name="그룹 14325" transform="translate(-1532 -541)">
+        <path id="ic_archive_24px" d="M61.467 10.433l-4.633-5.6A4.838 4.838 0 0 0 53 3H13a4.954 4.954 0 0 0-3.867 1.833l-4.6 5.6A6.527 6.527 0 0 0 3 14.667v41.666A6.686 6.686 0 0 0 9.667 63h46.666A6.686 6.686 0 0 0 63 56.333V14.667a6.527 6.527 0 0 0-1.533-4.234zM33 51.333L14.667 33h11.666v-6.667h13.334V33h11.666zM10.067 9.667l2.7-3.333h40L55.9 9.667z" class="cls-1" transform="translate(1539 548)"/>
+        <g id="_24" data-name="24" transform="translate(1532 541)">
+            <path id="사각형_21" d="M0 0h80v80H0z" class="cls-2" data-name="사각형 21"/>
+            <text id="_24-2" class="cls-3" data-name="24" transform="translate(32 18)">
+                <tspan x="0" y="0">24</tspan>
+            </text>
+        </g>
+    </g>
+</svg>

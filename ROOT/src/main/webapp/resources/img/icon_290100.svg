@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+    <defs>
+        <style>
+            .cls-1,.cls-4{fill:none}.cls-2{fill:#fff}.cls-3{clip-path:url(#clip-path)}.cls-4{font-size:1px;font-family:NotoSansKR-Regular,Noto Sans KR Regular}
+        </style>
+        <clipPath id="clip-path">
+            <path d="M0 0h24v24H0z" class="cls-1"/>
+        </clipPath>
+    </defs>
+    <g id="그룹_13816" data-name="그룹 13816" transform="translate(-.382 -.032)">
+        <g id="그룹_7051" data-name="그룹 7051" transform="translate(.382 .032)">
+            <path id="ic_account_box_24px" d="M3 5.017v14.121a2.017 2.017 0 0 0 2.017 2.017h14.121a2.023 2.023 0 0 0 2.017-2.017V5.017A2.023 2.023 0 0 0 19.138 3H5.017A2.017 2.017 0 0 0 3 5.017zm12.1 4.035a3.026 3.026 0 1 1-3.026-3.026A3.022 3.022 0 0 1 15.1 9.052zm-9.074 8.069c0-2.017 4.034-3.127 6.052-3.127s6.052 1.109 6.052 3.127v1.009H6.026z" class="cls-2" transform="translate(-.178 .009)"/>
+            <path id="사각형_13983" d="M0 0h24v24H0z" class="cls-1" data-name="사각형 13983"/>
+        </g>
+        <g id="_24" class="cls-3" data-name="24" transform="translate(.382 .032)">
+            <path id="사각형_21" d="M0 0h24v24H0z" class="cls-1" data-name="사각형 21"/>
+            <text id="_24-2" class="cls-4" data-name="24" transform="translate(6.118 3)">
+                <tspan x="0" y="0">24</tspan>
+            </text>
+        </g>
+    </g>
+</svg>

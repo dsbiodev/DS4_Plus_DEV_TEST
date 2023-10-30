@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.pbfw.choomo.mapper.ChoomoMapper">
+
+	<!-- obituary_comment_tb:S -->
+	<sql id="selectObituarySql">
+		SELECT *
+		FROM obituary_comment_tb
+	</sql>
+	
+	<select id="selectObituaryTotalCount" parameterType="hashmap" resultType="string">
+		SELECT COUNT(*) AS total FROM (<include refid="selectObituarySql"/>) A
+	</select>
+	
+	<select id="selectObituaryList" parameterType="hashmap" resultType="hashmap">
+		<include refid="selectObituarySql"/>
+		<if test="order != null and order != ''">ORDER BY ${order}</if>
+		<if test="queryPage != null and queryPage != ''">LIMIT ${queryPage}, ${display}</if>
+	</select>
+	<!-- obituary_comment_tb:E -->
+	
+	
+	
+	
+	
+	<insert id="insertObituary" parameterType="hashmap">
+		INSERT INTO obituary_comment_tb(EVENT_NO, NAME, COMMENT_NO, USER_FLAG)
+		VALUES(#{eventNo}, #{name}, #{commentNo}, #{userFlag})
+	</insert>
+	
+	
+	<select id="selectEventObituaryAlive" parameterType="hashmap" resultType="hashmap">	
+		SELECT A.OBITUARY_COMMENT_NO, A.EVENT_NO, A.NAME, A.COMMENT_NO, USER_FLAG
+		FROM obituary_comment_tb A
+		WHERE 1=1
+		AND A.EVENT_NO IN(${eventNos})
+	</select>
+	
+	<select id="selectEventObituary" parameterType="hashmap" resultType="hashmap">
+		SELECT OBITUARY_COMMENT_NO, EVENT_NO, NAME, COMMENT_NO, USER_FLAG
+<!-- 			,(SELECT KO FROM common_code_tb WHERE TARGET = 'OBITUARY_COMMENT' AND VALUE = A.COMMENT_NO) AS COMMENT -->
+		FROM obituary_comment_tb A
+		WHERE 1=1
+		<if test="eventNo != null and eventNo != ''">AND EVENT_NO = ${eventNo}</if>
+		ORDER BY CREATE_DT ASC
+	</select>
+	
+	
+	<insert id="insertEventObituary" parameterType="hashmap">
+		INSERT INTO biz_msg (MSG_TYPE, CMID, REQUEST_TIME, SEND_TIME, DEST_PHONE, SEND_PHONE, DEST_NAME,
+		MSG_BODY, TEMPLATE_CODE, SENDER_KEY, NATION_CODE, RE_TYPE, RE_BODY, EVENT_NO)
+		VALUES (6, CONCAT(#{id}, (SELECT CAST(RAND() * 99999 AS SIGNED) + 10000)), NOW(), NOW(), REPLACE(#{phone}, '-', ''), '16683120',  #{name}
+		,#{body}, 'bizp_2020042717425703031506637', '6f937eb28801f1d125824166b55ccfb84c00e51b', '82', 'MMS', #{body},  #{eventNo});
+	</insert>
+	
+	
+	<select id="selectEventObituaryList" parameterType="hashmap" resultType="hashmap">
+		SELECT A.*
+		FROM(
+			SELECT EVENT_NO, DEST_PHONE, SEND_PHONE, DEST_NAME, REQUEST_TIME
+				, (SELECT KO FROM common_code_tb WHERE TARGET = 'BIZPPURIO' AND VALUE = CALL_STATUS) AS CALL_STATUS
+			FROM biz_msg
+			UNION ALL
+			SELECT EVENT_NO, DEST_PHONE, SEND_PHONE, DEST_NAME, REQUEST_TIME
+    			, (SELECT KO FROM common_code_tb WHERE TARGET = 'BIZPPURIO' AND VALUE = CALL_STATUS) AS CALL_STATUS
+			FROM biz_log_${date}
+			WHERE CALL_STATUS IN(7000, 4100)
+			UNION ALL
+			SELECT EVENT_NO, DEST_PHONE, SEND_PHONE, DEST_NAME, REQUEST_TIME
+    			, (SELECT KO FROM common_code_tb WHERE TARGET = 'BIZPPURIO' AND VALUE = CALL_STATUS) AS CALL_STATUS
+			FROM biz_log_${date_1}
+			WHERE CALL_STATUS IN(7000, 4100)
+			) A
+		WHERE A.EVENT_NO = ${eventNo}
+        ORDER BY A.REQUEST_TIME
+	</select>
+	
+	
+	
+</mapper>

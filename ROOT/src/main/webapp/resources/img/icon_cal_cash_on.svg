@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="207" height="240" viewBox="0 0 207 240">
+    <defs>
+        <style>
+            .cls-1{fill:#fff;stroke:#157ffb;stroke-width:2px}.cls-2,.cls-8{fill:#157ffb}.cls-2{font-size:40px;font-family:NotoSansKR-Medium,Noto Sans KR Medium;font-weight:500;letter-spacing:.05em}.cls-3{fill:#fcc62d}.cls-4{fill:#e4af18}.cls-5{fill:#ce9912}.cls-6{fill:#ffd949}.cls-7{fill:#f0c41b}.cls-9{stroke:none}.cls-10{fill:none}
+        </style>
+    </defs>
+    <g id="그룹_18318" data-name="그룹 18318" transform="translate(-1218 -1074)">
+        <g id="사각형_39440" class="cls-1" data-name="사각형 39440" transform="translate(1218 1074)">
+            <rect width="207" height="240" class="cls-9" rx="2"/>
+            <rect width="205" height="238" x="1" y="1" class="cls-10" rx="1"/>
+        </g>
+        <text id="현금" class="cls-2" transform="translate(1284 1288)">
+            <tspan x="0" y="0">현금</tspan>
+        </text>
+        <g id="그룹_18313" data-name="그룹 18313" transform="translate(110 283)">
+            <g id="XMLID_22_" transform="translate(1182 881)">
+                <path id="XMLID_143_" d="M53.582 29.211v1.281c0 7.17-12.042 12.982-26.9 12.982-8.2 0-15.537-1.773-20.47-4.566 1.663 6.46 12.968 11.806 26.677 11.806 14.854 0 26.9-6.276 26.9-13.447 0-3.153-2.334-5.931-6.207-8.057" class="cls-3" transform="translate(.211 1.004)"/>
+                <path id="XMLID_142_" d="M32.9 50.447C18.045 50.447 6 44.17 6 37v8.738c0 7.17 12.042 12.983 26.9 12.983s26.9-5.813 26.9-12.983V37c0 7.17-12.042 13.447-26.9 13.447" class="cls-4" transform="translate(.204 1.271)"/>
+                <path id="XMLID_141_" d="M9 51.636a16.814 16.814 0 0 0 2.069 1.6v-8.578A17.191 17.191 0 0 1 9 43z" class="cls-5" transform="translate(.307 1.477)"/>
+                <path id="XMLID_140_" d="M53 44.658v8.576a16.714 16.714 0 0 0 2.069-1.6V43A17.03 17.03 0 0 1 53 44.658" class="cls-5" transform="translate(1.825 1.477)"/>
+                <path id="XMLID_139_" d="M13 54.343q.981.507 2.069.961v-8.475q-1.083-.477-2.069-1.008z" class="cls-5" transform="translate(.445 1.574)"/>
+                <path id="XMLID_138_" d="M49 55.3q1.086-.453 2.069-.961V45.82q-.981.531-2.069 1.008z" class="cls-5" transform="translate(1.687 1.574)"/>
+                <path id="XMLID_137_" d="M17 56.025q1 .343 2.069.64v-8.392q-1.066-.317-2.069-.679z" class="cls-5" transform="translate(.583 1.635)"/>
+                <path id="XMLID_136_" d="M45 56.665q1.066-.3 2.069-.64v-8.431q-1 .362-2.069.679z" class="cls-5" transform="translate(1.549 1.635)"/>
+                <path id="XMLID_135_" d="M22 57.361c.676.137 1.367.259 2.069.367v-8.32c-.7-.117-1.393-.247-2.069-.392z" class="cls-5" transform="translate(.756 1.684)"/>
+                <path id="XMLID_134_" d="M40 57.728c.7-.11 1.393-.232 2.069-.367v-8.346a47.12 47.12 0 0 1-2.069.393z" class="cls-5" transform="translate(1.376 1.684)"/>
+                <path id="XMLID_133_" d="M28 58.174a53.36 53.36 0 0 0 2.069.111v-8.278c-.7-.027-1.388-.064-2.069-.119z" class="cls-5" transform="translate(.963 1.714)"/>
+                <path id="XMLID_132_" d="M34 58.286c.7-.026 1.388-.06 2.069-.111v-8.287c-.681.055-1.372.092-2.069.12z" class="cls-5" transform="translate(1.169 1.714)"/>
+                <path id="XMLID_131_" d="M26.9 35.44C12.045 35.44 0 29.163 0 21.993v8.738C0 37.9 12.045 43.715 26.9 43.715S53.8 37.9 53.8 30.731v-8.738c0 7.17-12.042 13.447-26.9 13.447" class="cls-4" transform="translate(-.003 .756)"/>
+                <path id="XMLID_130_" d="M3 36.629a16.815 16.815 0 0 0 2.069 1.6v-8.578A17.287 17.287 0 0 1 3 27.994z" class="cls-5" transform="translate(.1 .962)"/>
+                <path id="XMLID_129_" d="M47 29.651v8.576a16.714 16.714 0 0 0 2.069-1.6v-8.634A17.029 17.029 0 0 1 47 29.651" class="cls-5" transform="translate(1.618 .962)"/>
+                <path id="XMLID_128_" d="M7 39.336q.981.507 2.069.961v-8.474Q7.986 31.345 7 30.814v8.522z" class="cls-5" transform="translate(.238 1.059)"/>
+                <path id="XMLID_127_" d="M43 40.3q1.086-.453 2.069-.961v-8.526q-.981.531-2.069 1.008z" class="cls-5" transform="translate(1.48 1.059)"/>
+                <path id="XMLID_126_" d="M11 41.018q1 .343 2.069.64v-8.392q-1.066-.316-2.069-.679z" class="cls-5" transform="translate(.376 1.12)"/>
+                <path id="XMLID_125_" d="M39 41.658q1.066-.3 2.069-.64v-8.431q-1 .362-2.069.679z" class="cls-5" transform="translate(1.342 1.12)"/>
+                <path id="XMLID_124_" d="M16 42.354c.676.137 1.367.259 2.069.367V34.4c-.7-.117-1.393-.247-2.069-.392z" class="cls-5" transform="translate(.549 1.168)"/>
+                <path id="XMLID_123_" d="M34 42.722c.7-.11 1.393-.232 2.069-.367v-8.346a47.12 47.12 0 0 1-2.069.393z" class="cls-5" transform="translate(1.169 1.168)"/>
+                <path id="XMLID_122_" d="M22 43.168a53.36 53.36 0 0 0 2.069.111V35c-.7-.027-1.388-.064-2.069-.119z" class="cls-5" transform="translate(.756 1.198)"/>
+                <path id="XMLID_121_" d="M28 43.279c.7-.026 1.388-.06 2.069-.111v-8.287c-.681.055-1.372.092-2.069.12z" class="cls-5" transform="translate(.963 1.198)"/>
+                <path id="XMLID_120_" d="M52.63 33.3c-2.769 5.747-13.439 10.031-26.19 10.031a50.778 50.778 0 0 1-13.114-1.648c3.753 2.55 10.433 4.717 19.321 4.717 14.154 0 22.759-5.493 22.759-9.274 0-1.262-.971-2.6-2.776-3.825" class="cls-6" transform="translate(.456 1.144)"/>
+                <path id="XMLID_119_" d="M32.072 33.625c-14.854 0-26.9-5.813-26.9-12.983V14.8C1.926 16.833 0 19.386 0 22.248c0 7.17 12.042 13.447 26.9 13.447a43.652 43.652 0 0 0 18.464-3.767 50.6 50.6 0 0 1-13.292 1.7" class="cls-6" transform="translate(-.003 .508)"/>
+                <path id="XMLID_118_" d="M31.9 25.44C17.045 25.44 5 19.163 5 11.993v8.738C5 27.9 17.045 33.715 31.9 33.715S58.8 27.9 58.8 20.731v-8.738c0 7.17-12.042 13.447-26.9 13.447" class="cls-4" transform="translate(.169 .412)"/>
+                <path id="XMLID_117_" d="M8 26.629a16.814 16.814 0 0 0 2.069 1.6v-8.578A17.287 17.287 0 0 1 8 17.994z" class="cls-5" transform="translate(.273 .618)"/>
+                <path id="XMLID_116_" d="M52 19.651v8.576a16.713 16.713 0 0 0 2.069-1.6v-8.634A17.028 17.028 0 0 1 52 19.651" class="cls-5" transform="translate(1.79 .618)"/>
+                <path id="XMLID_115_" d="M12 29.336q.981.507 2.069.961v-8.474q-1.083-.478-2.069-1.009z" class="cls-5" transform="translate(.411 .715)"/>
+                <path id="XMLID_114_" d="M48 30.3q1.086-.453 2.069-.961v-8.526q-.981.531-2.069 1.009z" class="cls-5" transform="translate(1.652 .715)"/>
+                <path id="XMLID_113_" d="M16 31.018q1 .343 2.069.64v-8.392q-1.066-.317-2.069-.679z" class="cls-5" transform="translate(.549 .776)"/>
+                <path id="XMLID_112_" d="M44 31.658q1.066-.3 2.069-.64v-8.431q-1 .362-2.069.679z" class="cls-5" transform="translate(1.514 .776)"/>
+                <path id="XMLID_111_" d="M21 32.354c.676.137 1.367.259 2.069.367V24.4c-.7-.117-1.393-.247-2.069-.392z" class="cls-5" transform="translate(.721 .825)"/>
+                <path id="XMLID_110_" d="M39 32.722c.7-.11 1.393-.232 2.069-.367v-8.346a47.12 47.12 0 0 1-2.069.393z" class="cls-5" transform="translate(1.342 .825)"/>
+                <path id="XMLID_109_" d="M27 33.168a53.36 53.36 0 0 0 2.069.111V25c-.7-.027-1.388-.064-2.069-.119z" class="cls-5" transform="translate(.928 .855)"/>
+                <path id="XMLID_108_" d="M33 33.279c.7-.026 1.388-.06 2.069-.111v-8.287c-.681.055-1.372.092-2.069.12z" class="cls-5" transform="translate(1.135 .855)"/>
+                <path id="XMLID_107_" d="M58.8 12.412c0 7.17-12.042 13.447-26.9 13.447S5 19.582 5 12.412 17.045 0 31.9 0s26.9 5.242 26.9 12.412" class="cls-3" transform="translate(.169)"/>
+                <path id="XMLID_106_" d="M31.762 21.583C17.608 21.583 9 16.091 9 12.309S17.608 3 31.762 3 54.52 8.529 54.52 12.309s-8.6 9.274-22.759 9.274" class="cls-6" transform="translate(.307 .103)"/>
+                <path id="XMLID_105_" d="M38.328 13.577c.848-.18 1.346-.7 1.163-1.3l-.2-.637a1.937 1.937 0 0 0-1.389-1.054c-.933-1.993-3.312-2.715-6.846-2.715-.168 0-.331 0-.492.01a9.028 9.028 0 0 1-3.348-.41 3.739 3.739 0 0 1-.9-.438c-.09-.067-.316-.024-.316.067a3.223 3.223 0 0 0 .044.529c.128.773-.025.657-.788 1.427a5.214 5.214 0 0 0-1.051 1.537 1.937 1.937 0 0 0-1.382 1.052l-.2.637c-.183.6.314 1.12 1.163 1.3.242 1.527 1.28 2.867 3.542 3.606l-.124 1.073a.9.9 0 0 1-.64.682L22 20.585a44.256 44.256 0 0 0 9.055.9A44.463 44.463 0 0 0 40 20.61l-4.464-1.668a.9.9 0 0 1-.627-.676l-.125-1.081c2.262-.739 3.3-2.08 3.542-3.607" class="cls-7" transform="translate(.756 .241)"/>
+            </g>
+        </g>
+        <path id="Selection_Control_Radio_On_Enabled" d="M21-384a16.006 16.006 0 0 0-16 16 16.006 16.006 0 0 0 16 16 16.006 16.006 0 0 0 16-16 16.006 16.006 0 0 0-16-16zm0 28.8A12.8 12.8 0 0 1 8.2-368 12.8 12.8 0 0 1 21-380.8 12.8 12.8 0 0 1 33.8-368 12.8 12.8 0 0 1 21-355.2zm0-4.8a8 8 0 0 0 8-8 8 8 0 0 0-8-8 8 8 0 0 0-8 8 8 8 0 0 0 8 8z" class="cls-8" data-name="Selection Control / Radio / On / Enabled" transform="translate(1301 1488)"/>
+    </g>
+</svg>
